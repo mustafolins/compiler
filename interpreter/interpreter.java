@@ -32,16 +32,10 @@ public class interpreter {
         ids = new ArrayList<String>();
 
         parser = par;
-        if (parser.parse()) {
-            System.out.println("Successfully parsed program:");
-            compile();
-        } else {
-            System.out.println("Failed to parse program!");
-        }
     }
 
     public static void main(String[] args) {
-        String str = "a_variable_name \"string with 3 spaces!\"  \n"
+        String str = "a_variable_name \"Hello, world!\"  \n"
                     + "print a_variable_name \n";
 
         lexer lex = new lexer();
@@ -52,8 +46,24 @@ public class interpreter {
         parser par = new parser(lex);
 
         interpreter interpreter = new interpreter(par);
+        interpreter.tryCompile();
     }
 
+    /**
+     * Try to compile the code given that it succesfully parses.
+     */
+    private void tryCompile() {
+        if (parser.parse()) {
+            System.out.println("Successfully parsed program:");
+            compile();
+        } else {
+            System.out.println("Failed to parse program!");
+        }
+    }
+
+    /**
+     * Write the interepreted code to a class and then use the JavaCompiler to compile the class.
+     */
     private void compile() {
         programText = "public class Test {\n" + "public static void run() {\n" + interpret()
                 + "\n}\n" + "}\n";
@@ -97,6 +107,10 @@ public class interpreter {
         }
     }
 
+    /**
+     * Interprets the parser's parse tree into java equivalent code.
+     * @return A String of Java code.
+     */
     private String interpret() {
         String results = "";
 
@@ -130,6 +144,11 @@ public class interpreter {
         return results;
     }
 
+    /**
+     * Determines if the id has already been initialized.
+     * @param value The String of the id.
+     * @return True if the id has been initialized, false otherwise.
+     */
     private boolean isAlreadyAnId(String value) {
         for (String id : ids) {
             if (id.equals(value)) {
@@ -139,6 +158,12 @@ public class interpreter {
         return false;
     }
 
+    /**
+     * Process the given lexeme as a keyword.
+     * @param lexeme the lexeme to process.
+     * @param i the current position of the interpretation of the parser's parse tree.
+     * @return the interpreted String for the given lexeme.
+     */
     private String processKeyword(lexeme lexeme, int i) {
         switch (lexeme.value) {
             case "print":
@@ -158,6 +183,10 @@ public class interpreter {
         return null;
     }
 
+    /**
+     * Runs the compiled interpreted class.
+     * @param parentDirectory
+     */
     private void run(File parentDirectory) {
         URLClassLoader classLoader;
         try {

@@ -6,7 +6,6 @@ import regex.lexeme;
 
 public class expectedOrder {
     private ArrayList<node> nodes;
-    private ArrayList<lexeme> lexemes;
 
     public expectedOrder(){
         nodes = new ArrayList<node>();
