@@ -25,18 +25,20 @@ public class interpreter {
     public parser parser;
     public String programText;
 
-    public ArrayList<String> ids;
+    public ArrayList<idInfo> ids;
 
     public interpreter(parser par) {
         // initilize list of arrays
-        ids = new ArrayList<String>();
+        ids = new ArrayList<idInfo>();
 
         parser = par;
     }
 
     public static void main(String[] args) {
-        String str = "a_variable_name \"Hello, world!\"  \n"
-                    + "print a_variable_name \n";
+        String str = "a_variable_name : 1  \n"
+                    + "print a_variable_name \n"
+                    + "another_variable : a_variable_name + 5 \n"
+                    + "print another_variable \n";
 
         lexer lex = new lexer();
         lex.analyze(str);
@@ -115,6 +117,7 @@ public class interpreter {
         String results = "";
 
         String prevId = "";
+        String preveLexName = "";
         for (int i = 0; i < parser.pTree.lexemes.size(); i++) {
             lexeme lexeme = parser.pTree.lexemes.get(i);
             switch (lexeme.name) {
@@ -123,35 +126,69 @@ public class interpreter {
                     break;
                 case "id":
                     if (!isAlreadyAnId(lexeme.value)) {
-                        results += "Object " + lexeme.value + ";\n";
-                        prevId = lexeme.value;
-                        ids.add(lexeme.value);
+                        String type = getType(parser.pTree.lexemes.get(i + 2));
+                        results += type + " " + lexeme.value + ";\n";
+                        ids.add(new idInfo(lexeme.value, type));
+                    } else if (!preveLexName.equals("keyword")) {
+                        results += lexeme.value;
                     }
+                    prevId = lexeme.value;
+                    break;
+                case "assignment":
+                    results += prevId + " = ";
                     break;
                 case "string_literal":
-                    results += prevId + " = " + lexeme.value;
+                    results += lexeme.value;
+                    break;
+                case "integer_literal":
+                    results += lexeme.value;
                     break;
                 case "keyword":
                     results += processKeyword(lexeme, i);
+                    break;
+                case "operator":
+                    results += lexeme.value;
                     break;
             
                 default:
                     System.out.println("Unhandled lexeme: " + lexeme.name + " Value: " + lexeme.value);
                     break;
             }
+
+            preveLexName = lexeme.name;
         }
 
         return results;
     }
 
+    private String getType(lexeme lexeme) {
+        switch (lexeme.name) {
+            case "integer_literal":
+                return "int";
+            case "string_literal":
+                return "String";
+            case "id":
+                for (idInfo id : ids) {
+                    if (id.id.equals(lexeme.value)) {
+                        return id.type;
+                    }
+                }
+                throw new Error("Id not found.");
+        
+            default:
+                return "Object";
+        }
+    }
+
     /**
      * Determines if the id has already been initialized.
+     * 
      * @param value The String of the id.
      * @return True if the id has been initialized, false otherwise.
      */
     private boolean isAlreadyAnId(String value) {
-        for (String id : ids) {
-            if (id.equals(value)) {
+        for (idInfo id : ids) {
+            if (id.id.equals(value)) {
                 return true;
             }
         }

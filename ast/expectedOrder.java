@@ -11,15 +11,26 @@ public class expectedOrder {
         nodes = new ArrayList<node>();
 
         // id expectations
-        node idNode = new node(new lexeme(null), new lexeme("id"), new lexeme("string_literal"));
-        idNode.addChild(new lexeme("decimal_literal"));
-        idNode.addChild(new lexeme("integer_literal"));
+        node idNode = new node(new lexeme(null), new lexeme("id"), new lexeme("assignment"));
         idNode.addChild(new lexeme("end_of_statement"));
+        idNode.addChild(new lexeme("operator"));
         nodes.add(idNode);
+
+        // assignment
+        node assignmentNode = new node(new lexeme(null), new lexeme("assignment"), new lexeme("string_literal"));
+        assignmentNode.addChild(new lexeme("decimal_literal"));
+        assignmentNode.addChild(new lexeme("integer_literal"));
+        assignmentNode.addChild(new lexeme("id"));
+        nodes.add(assignmentNode);
 
         // string literal expectations
         node stringNode = new node(new lexeme(null), new lexeme("string_literal"), new lexeme("end_of_statement"));
         nodes.add(stringNode);
+
+        // integer literal expectations
+        node intNode = new node(new lexeme(null), new lexeme("integer_literal"), new lexeme("end_of_statement"));
+        intNode.addChild(new lexeme("operator"));
+        nodes.add(intNode);
 
         // end of statement expextations
         node endOfStatementNode = new node(new lexeme(null), new lexeme("end_of_statement"), null);
@@ -28,6 +39,16 @@ public class expectedOrder {
         // keyword expextations
         node keywordNode = new node(new lexeme(null), new lexeme("keyword"), new lexeme("id"));
         nodes.add(keywordNode);
+
+        // operator expectations
+        node operatorNode = new node(new lexeme("id"), new lexeme("operator"), new lexeme("id"));
+        operatorNode.addParent(new lexeme("decimal_literal"));
+        operatorNode.addParent(new lexeme("integer_literal"));
+        operatorNode.addParent(new lexeme("string_literal"));
+        operatorNode.addChild(new lexeme("decimal_literal"));
+        operatorNode.addChild(new lexeme("integer_literal"));
+        operatorNode.addChild(new lexeme("string_literal"));
+        nodes.add(operatorNode);
     }
 
 	public boolean conforms(parseTree pTree) {
