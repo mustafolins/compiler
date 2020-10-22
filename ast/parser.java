@@ -1,19 +1,14 @@
 package ast;
 
-import regex.lexeme;
 import regex.lexer;
 
 public class parser {
-    public parseTree pTree;
     public expectedOrder eo;
+    public lexer lexer;
 
-    public parser(lexer lexer){
+    public parser(lexer lex){
         eo = new expectedOrder();
-        pTree = new parseTree();
-        for (lexeme lexeme : lexer.lexemes) {
-            pTree.add(lexeme);
-        }
-
+        lexer = lex;
     }
 
     // public static void main(String[] args) {
@@ -29,7 +24,7 @@ public class parser {
     // }
 
     public boolean parse() {
-        if (eo.conforms(pTree)) {
+        if (eo.conforms(lexer)) {
             return true;
         } else {
             return false;

@@ -3,6 +3,7 @@ package ast;
 import java.util.ArrayList;
 
 import regex.lexeme;
+import regex.lexer;
 
 public class expectedOrder {
     private ArrayList<node> nodes;
@@ -11,88 +12,90 @@ public class expectedOrder {
         nodes = new ArrayList<node>();
 
         // id expectations
-        node idNode = new node(new lexeme(null), new lexeme("id"), new lexeme("assignment"));
-        idNode.addChild(new lexeme("end_of_statement"));
-        idNode.addChild(new lexeme("operator"));
+        node idNode = new node(new lexeme("id"));
         nodes.add(idNode);
 
-        // assignment
-        node assignmentNode = new node(new lexeme(null), new lexeme("assignment"), new lexeme("string_literal"));
-        assignmentNode.addChild(new lexeme("decimal_literal"));
-        assignmentNode.addChild(new lexeme("integer_literal"));
-        assignmentNode.addChild(new lexeme("id"));
-        nodes.add(assignmentNode);
+        // end of statement expextations
+        node endOfStatementNode = new node(new lexeme("end_of_statement"));
+        endOfStatementNode.addChild(idNode);
+        nodes.add(endOfStatementNode);
+        idNode.addChild(endOfStatementNode);
+
+        // operator expectations
+        node operatorNode = new node(new lexeme("operator"));
+        operatorNode.addChild(idNode);
+        nodes.add(operatorNode);
+        idNode.addChild(operatorNode);
 
         // string literal expectations
-        node stringNode = new node(new lexeme(null), new lexeme("string_literal"), new lexeme("end_of_statement"));
+        node stringNode = new node(new lexeme("string_literal"));
+        stringNode.addChild(endOfStatementNode);
         nodes.add(stringNode);
 
         // integer literal expectations
-        node intNode = new node(new lexeme(null), new lexeme("integer_literal"), new lexeme("end_of_statement"));
-        intNode.addChild(new lexeme("operator"));
+        node intNode = new node(new lexeme("integer_literal"));
+        intNode.addChild(endOfStatementNode);
+        intNode.addChild(operatorNode);
         nodes.add(intNode);
+        operatorNode.addChild(intNode);
+        
+        // decimal literal expectations
+        node decNode = new node(new lexeme("decimal_literal"));
+        decNode.addChild(endOfStatementNode);
+        decNode.addChild(operatorNode);
+        nodes.add(decNode);
+        operatorNode.addChild(decNode);
 
-        // end of statement expextations
-        node endOfStatementNode = new node(new lexeme(null), new lexeme("end_of_statement"), null);
-        nodes.add(endOfStatementNode);
+        // assignment
+        node assignmentNode = new node(new lexeme("assignment"));
+        assignmentNode.addChild(stringNode);
+        assignmentNode.addChild(decNode);
+        assignmentNode.addChild(intNode);
+        assignmentNode.addChild(idNode);
+        nodes.add(assignmentNode);
+        idNode.addChild(assignmentNode);
 
         // keyword expextations
-        node keywordNode = new node(new lexeme(null), new lexeme("keyword"), new lexeme("id"));
+        node keywordNode = new node(new lexeme("keyword"));
+        keywordNode.addChild(idNode);
+        keywordNode.addChild(endOfStatementNode);
+        keywordNode.addChild(stringNode);
+        keywordNode.addChild(intNode);
+        keywordNode.addChild(decNode);
         nodes.add(keywordNode);
-
-        // operator expectations
-        node operatorNode = new node(new lexeme("id"), new lexeme("operator"), new lexeme("id"));
-        operatorNode.addParent(new lexeme("decimal_literal"));
-        operatorNode.addParent(new lexeme("integer_literal"));
-        operatorNode.addParent(new lexeme("string_literal"));
-        operatorNode.addChild(new lexeme("decimal_literal"));
-        operatorNode.addChild(new lexeme("integer_literal"));
-        operatorNode.addChild(new lexeme("string_literal"));
-        nodes.add(operatorNode);
+        endOfStatementNode.addChild(keywordNode);
     }
 
-	public boolean conforms(parseTree pTree) {
+	public boolean conforms(lexer lex) {
         // initialize previous lexeme which should be nothing at the begginning
-        lexeme prevLexeme = new lexeme(null);
+        lexeme curLexeme = new lexeme(null);
         // loop through parse trees lexemes
-        for (int i = 0; i < pTree.lexemes.size() - 1; i++) {
-            lexeme curLexeme = pTree.lexemes.get(i);
+        for (int i = 0; i < lex.lexemes.size() - 1; i++) {
+            curLexeme = lex.lexemes.get(i);
 
             // see if the previous, current and next lexemes conform to the expected order as defined in constructor
-            if (!hasCorrectOrder(prevLexeme, curLexeme, pTree.lexemes.get(i + 1))) {
+            if (!hasCorrectOrder(curLexeme, lex.lexemes.get(i + 1))) {
                 return false;
             }
-
-            prevLexeme = curLexeme;
         }
 		return true;
 	}
 
-    private boolean hasCorrectOrder(lexeme prevLexeme, lexeme curLexeme, lexeme nextLexeme) {
+    private boolean hasCorrectOrder(lexeme curLexeme, lexeme nextLexeme) {
         // has no next lexeme so anything should be excepted
         if (nextLexeme.name == null) {
             return true;
         }
-        // node parent = nodes.get(0);
-        // go through expected nods and check if passed lexemes match expectations
-        for (int i = 0; i < nodes.size(); i++) {
-            // get current node
-            node currentNode = nodes.get(i);
-            // if current nodes current lexeme matches the given current then check that the next lexeme is a match
-            if (currentNode.current.name.equals(curLexeme.name)) {
-                // has no children expectation so except anything
-                if (currentNode.children == null) {
-                    return true;
-                }
-                // loop through children lexemes inside of current node
-                for (lexeme nextNodes : currentNode.children) {
-                    try {
-                        // if the given next lexeme is in the rule return true
-                        if (nextNodes.name.equals(nextLexeme.name)) {
-                            return true;
-                        }
-                    } catch (Exception e) {
-                        System.out.println("");
+        
+        // loop through parent nodes
+        for (node parent : nodes) {
+            // if there is a match loop through children nodes
+            if (parent.current.name.equals(curLexeme.name)) {
+                // loop through all the children nodes of the current parent
+                for (node child : parent.children) {
+                    // if there's a match than it is in order
+                    if (child.current.name.equals(nextLexeme.name)) {
+                        return true;
                     }
                 }
             }

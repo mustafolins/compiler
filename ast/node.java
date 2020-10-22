@@ -5,25 +5,25 @@ import java.util.ArrayList;
 import regex.lexeme;
 
 public class node {
-    public ArrayList<lexeme> parents;
     public lexeme current;
-    public ArrayList<lexeme> children;
+    public ArrayList<node> children;
 
-    public node(lexeme p, lexeme c, lexeme n) {
-        parents = new ArrayList<lexeme>();
-        parents.add(p);
+    public node(lexeme c) {
+        current = c;
+        if (children == null) {
+            children = new ArrayList<node>();
+        }
+    }
+
+    public node(lexeme c, node n) {
         current = c;
         if (n != null) {
-            children = new ArrayList<lexeme>();
+            children = new ArrayList<node>();
             children.add(n);
         }
     }
 
-    public void addParent(lexeme pNode){
-        parents.add(pNode);
-    }
-
-    public void addChild(lexeme child){
+    public void addChild(node child){
         children.add(child);
     }
 }

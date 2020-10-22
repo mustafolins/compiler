@@ -1,0 +1,15 @@
+~ initialize a_variable_name
+string   a_variable_name : "string with 3 spaces!"
+~ print a current value of a_variable_name
+print "This is the value for a_variable_name: "
+print a_variable_name
+~ print new line
+printl
+decimal d : 12.541 + 2.3
+printl d
+string another_string : "test"
+printl another_string
+integer num : 12 + 3
+printl num
+integer v21a : 123678
+printl v21a

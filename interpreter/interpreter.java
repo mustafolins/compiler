@@ -8,8 +8,11 @@ import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import javax.tools.JavaCompiler;
 import javax.tools.JavaFileObject;
@@ -35,10 +38,12 @@ public class interpreter {
     }
 
     public static void main(String[] args) {
-        String str = "a_variable_name : 1  \n"
-                    + "print a_variable_name \n"
-                    + "another_variable : a_variable_name + 5 \n"
-                    + "print another_variable \n";
+        String str = "";
+        if (args.length > 0) {
+            str = ReadFile(args[0]);
+        } else {
+            str = ReadFile("code.txt");
+        }
 
         lexer lex = new lexer();
         lex.analyze(str);
@@ -49,6 +54,24 @@ public class interpreter {
 
         interpreter interpreter = new interpreter(par);
         interpreter.tryCompile();
+    }
+
+    private static String ReadFile(String file) {
+        try {
+            String str = "";
+            List<String> strings = Files.readAllLines(Paths.get(file));
+            for (String string : strings) {
+                str += string + "\n";
+            }
+            return str;
+        } catch (SecurityException e) {
+            System.out.println("An error occurred.");
+            e.printStackTrace();
+        } catch (IOException e) {
+            System.out.println("An error occurred.");
+            e.printStackTrace();
+        }
+        return null;
     }
 
     /**
@@ -64,11 +87,11 @@ public class interpreter {
     }
 
     /**
-     * Write the interepreted code to a class and then use the JavaCompiler to compile the class.
+     * Write the interepreted code to a class and then use the JavaCompiler to
+     * compile the class.
      */
     private void compile() {
-        programText = "public class Test {\n" + "public static void run() {\n" + interpret()
-                + "\n}\n" + "}\n";
+        programText = "public class Test {\n" + "public static void run() {\n" + interpret() + "\n}\n" + "}\n";
 
         System.out.println(programText);
 
@@ -99,7 +122,7 @@ public class interpreter {
             } else {
                 System.out.println("Failed to compile!");
             }
-                
+
         } catch (IOException e) {
             e.printStackTrace();
         } catch (IllegalArgumentException e) {
@@ -111,25 +134,26 @@ public class interpreter {
 
     /**
      * Interprets the parser's parse tree into java equivalent code.
+     * 
      * @return A String of Java code.
      */
     private String interpret() {
         String results = "";
 
         String prevId = "";
-        String preveLexName = "";
-        for (int i = 0; i < parser.pTree.lexemes.size(); i++) {
-            lexeme lexeme = parser.pTree.lexemes.get(i);
+        lexeme previous = new lexeme(null);
+        for (int i = 0; i < parser.lexer.lexemes.size(); i++) {
+            // get current lexeme
+            lexeme lexeme = parser.lexer.lexemes.get(i);
             switch (lexeme.name) {
                 case "end_of_statement":
                     results += ";\n";
                     break;
                 case "id":
                     if (!isAlreadyAnId(lexeme.value)) {
-                        String type = getType(parser.pTree.lexemes.get(i + 2));
-                        results += type + " " + lexeme.value + ";\n";
-                        ids.add(new idInfo(lexeme.value, type));
-                    } else if (!preveLexName.equals("keyword")) {
+                        results += " " + lexeme.value + ";\n";
+                        ids.add(new idInfo(lexeme.value, previous.value));
+                    } else if (!previous.name.equals("keyword")) {
                         results += lexeme.value;
                     }
                     prevId = lexeme.value;
@@ -143,41 +167,28 @@ public class interpreter {
                 case "integer_literal":
                     results += lexeme.value;
                     break;
+                case "decimal_literal":
+                    results += lexeme.value;
+                    break;
                 case "keyword":
                     results += processKeyword(lexeme, i);
+                    if (lexeme.value.contains("print")) {
+                        i++;
+                    }
                     break;
                 case "operator":
                     results += lexeme.value;
                     break;
-            
+
                 default:
                     System.out.println("Unhandled lexeme: " + lexeme.name + " Value: " + lexeme.value);
                     break;
             }
 
-            preveLexName = lexeme.name;
+            previous = lexeme;
         }
 
         return results;
-    }
-
-    private String getType(lexeme lexeme) {
-        switch (lexeme.name) {
-            case "integer_literal":
-                return "int";
-            case "string_literal":
-                return "String";
-            case "id":
-                for (idInfo id : ids) {
-                    if (id.id.equals(lexeme.value)) {
-                        return id.type;
-                    }
-                }
-                throw new Error("Id not found.");
-        
-            default:
-                return "Object";
-        }
     }
 
     /**
@@ -197,23 +208,40 @@ public class interpreter {
 
     /**
      * Process the given lexeme as a keyword.
+     * 
      * @param lexeme the lexeme to process.
-     * @param i the current position of the interpretation of the parser's parse tree.
+     * @param i      the current position of the interpretation of the parser's
+     *               parse tree.
      * @return the interpreted String for the given lexeme.
      */
     private String processKeyword(lexeme lexeme, int i) {
+        lexeme nextLexeme = null;
         switch (lexeme.value) {
             case "print":
-                lexeme nextLexeme = null;
-                if (parser.pTree.lexemes.size() > i + 1) {
-                    nextLexeme = parser.pTree.lexemes.get(i + 1);
+                if (parser.lexer.lexemes.size() > i + 1) {
+                    nextLexeme = parser.lexer.lexemes.get(i + 1);
                 }
                 if (nextLexeme != null) {
+                    return "System.out.print(" + nextLexeme.value + ");\n";
+                } else {
+                    return "System.out.print();\n";
+                }
+            case "printl":
+                if (parser.lexer.lexemes.size() > i + 1) {
+                    nextLexeme = parser.lexer.lexemes.get(i + 1);
+                }
+                if (nextLexeme != null && !nextLexeme.name.equals("end_of_statement")) {
                     return "System.out.println(" + nextLexeme.value + ");\n";
                 } else {
                     return "System.out.println();\n";
                 }
-        
+            case "string":
+                return "String";
+            case "decimal":
+                return "double";
+            case "integer":
+                return "int";
+
             default:
                 break;
         }
@@ -222,6 +250,7 @@ public class interpreter {
 
     /**
      * Runs the compiled interpreted class.
+     * 
      * @param parentDirectory
      */
     private void run(File parentDirectory) {
