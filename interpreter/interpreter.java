@@ -37,24 +37,24 @@ public class interpreter {
         parser = par;
     }
 
-    public static void main(String[] args) {
-        String str = "";
-        if (args.length > 0) {
-            str = ReadFile(args[0]);
-        } else {
-            str = ReadFile("code.txt");
-        }
+    // public static void main(String[] args) {
+    //     String str = "";
+    //     if (args.length > 0) {
+    //         str = ReadFile(args[0]);
+    //     } else {
+    //         str = ReadFile("code.txt");
+    //     }
 
-        lexer lex = new lexer();
-        lex.analyze(str);
+    //     lexer lex = new lexer();
+    //     lex.analyze(str);
 
-        System.out.println(lex);
+    //     System.out.println(lex);
 
-        parser par = new parser(lex);
+    //     parser par = new parser(lex);
 
-        interpreter interpreter = new interpreter(par);
-        interpreter.tryCompile();
-    }
+    //     interpreter interpreter = new interpreter(par);
+    //     interpreter.tryCompile();
+    // }
 
     private static String ReadFile(String file) {
         try {
@@ -77,10 +77,10 @@ public class interpreter {
     /**
      * Try to compile the code given that it succesfully parses.
      */
-    private void tryCompile() {
+    public void tryCompile(boolean printInterpretation) {
         if (parser.parse()) {
             System.out.println("Successfully parsed program:");
-            compile();
+            compile(printInterpretation);
         } else {
             System.out.println("Failed to parse program!");
         }
@@ -90,10 +90,13 @@ public class interpreter {
      * Write the interepreted code to a class and then use the JavaCompiler to
      * compile the class.
      */
-    private void compile() {
+    private void compile(boolean printInterpretation) {
         programText = "public class Test {\n" + "public static void run() {\n" + interpret() + "\n}\n" + "}\n";
 
-        System.out.println(programText);
+        if (printInterpretation) {
+            System.out.println("Java Interpretation:");
+            System.out.println(programText);
+        }
 
         try {
             // File temp = File.createTempFile("Test", ".java");
@@ -262,8 +265,8 @@ public class interpreter {
 
             for (Method method : methods) {
                 if (method.getName().equals("run")) {
-                    System.out.println("Starting program.");
-                    method.invoke(helloClass);
+                    System.out.println("Starting program:");
+                    method.invoke(null);
                     return;
                 }
             }
