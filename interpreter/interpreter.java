@@ -29,6 +29,7 @@ public class interpreter {
     public String programText;
 
     public ArrayList<idInfo> ids;
+    private boolean inConditional = false;
 
     public interpreter(parser par) {
         // initilize list of arrays
@@ -150,28 +151,24 @@ public class interpreter {
             lexeme lexeme = parser.lexer.lexemes.get(i);
             switch (lexeme.name) {
                 case "end_of_statement":
-                    results += ";\n";
+                    results += (inConditional) ? ")\n" : ";\n";
+                    if (inConditional) {
+                        inConditional = false;
+                    }
                     break;
                 case "id":
                     if (!isAlreadyAnId(lexeme.value)) {
-                        results += " " + lexeme.value + ";\n";
+                        results += " " + lexeme.value;
                         ids.add(new idInfo(lexeme.value, previous.value));
                     } else if (!previous.name.equals("keyword")) {
+                        results += lexeme.value;
+                    } else if (previous.value.equals("while") || previous.value.equals("if")) {
                         results += lexeme.value;
                     }
                     prevId = lexeme.value;
                     break;
                 case "assignment":
-                    results += prevId + " = ";
-                    break;
-                case "string_literal":
-                    results += lexeme.value;
-                    break;
-                case "integer_literal":
-                    results += lexeme.value;
-                    break;
-                case "decimal_literal":
-                    results += lexeme.value;
+                    results += " = ";
                     break;
                 case "keyword":
                     results += processKeyword(lexeme, i);
@@ -179,7 +176,19 @@ public class interpreter {
                         i++;
                     }
                     break;
+                case "conditional":
+                    if (lexeme.value.equals("=")) {
+                        results += "==";
+                    } else {
+                        results += lexeme.value;
+                    }
+                    break;
+                case "string_literal":
+                case "integer_literal":
+                case "decimal_literal":
                 case "operator":
+                case "start_of_block":
+                case "end_of_block":
                     results += lexeme.value;
                     break;
 
@@ -244,6 +253,12 @@ public class interpreter {
                 return "double";
             case "integer":
                 return "int";
+            case "while":
+                inConditional = true;
+                return "while(";
+            case "if":
+                inConditional = true;
+                return "if(";
 
             default:
                 break;
@@ -267,6 +282,9 @@ public class interpreter {
                 if (method.getName().equals("run")) {
                     System.out.println("Starting program:");
                     method.invoke(null);
+                    // delete class and java files
+                    Files.delete(Paths.get(parentDirectory + "/" + "Test.java"));
+                    Files.delete(Paths.get(parentDirectory + "/" + "Test.class"));
                     return;
                 }
             }
@@ -279,6 +297,8 @@ public class interpreter {
         } catch (IllegalArgumentException e) {
             e.printStackTrace();
         } catch (InvocationTargetException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }

@@ -36,6 +36,7 @@ public class expectedOrder {
         node intNode = new node(new lexeme("integer_literal"));
         intNode.addChild(endOfStatementNode);
         intNode.addChild(operatorNode);
+        intNode.addChild(idNode);
         nodes.add(intNode);
         operatorNode.addChild(intNode);
         
@@ -64,6 +65,29 @@ public class expectedOrder {
         keywordNode.addChild(decNode);
         nodes.add(keywordNode);
         endOfStatementNode.addChild(keywordNode);
+
+        // conditionals
+        node conditionalNode = new node(new lexeme("conditional"));
+        conditionalNode.addChild(intNode);
+        conditionalNode.addChild(decNode);
+        conditionalNode.addChild(stringNode);
+        nodes.add(conditionalNode);
+        decNode.addChild(conditionalNode);
+        intNode.addChild(conditionalNode);
+        stringNode.addChild(conditionalNode);
+        idNode.addChild(conditionalNode);
+
+        // left code block
+        node leftBlock = new node(new lexeme("start_of_block"));
+        leftBlock.addChild(endOfStatementNode);
+        nodes.add(leftBlock);
+        endOfStatementNode.addChild(leftBlock);
+
+        // right code block
+        node rightBlock = new node(new lexeme("end_of_block"));
+        rightBlock.addChild(endOfStatementNode);
+        nodes.add(rightBlock);
+        endOfStatementNode.addChild(rightBlock);
     }
 
 	public boolean conforms(lexer lex) {

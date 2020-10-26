@@ -13,3 +13,11 @@ integer num : 12 + 3
 printl num
 integer v21a : 123678
 printl v21a
+~ loop while num is greater than 10
+while num >= 10
+{
+    ~ print num
+    printl num
+    ~ decrement num
+    num : num - 1
+}
