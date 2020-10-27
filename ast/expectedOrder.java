@@ -14,12 +14,14 @@ public class expectedOrder {
         // id expectations
         node idNode = new node(new lexeme("id"));
         nodes.add(idNode);
+        idNode.addChild(idNode);
 
         // end of statement expextations
         node endOfStatementNode = new node(new lexeme("end_of_statement"));
         endOfStatementNode.addChild(idNode);
         nodes.add(endOfStatementNode);
         idNode.addChild(endOfStatementNode);
+        endOfStatementNode.addChild(endOfStatementNode);
 
         // operator expectations
         node operatorNode = new node(new lexeme("operator"));
@@ -39,6 +41,7 @@ public class expectedOrder {
         intNode.addChild(idNode);
         nodes.add(intNode);
         operatorNode.addChild(intNode);
+        idNode.addChild(intNode);
         
         // decimal literal expectations
         node decNode = new node(new lexeme("decimal_literal"));
@@ -65,6 +68,7 @@ public class expectedOrder {
         keywordNode.addChild(decNode);
         nodes.add(keywordNode);
         endOfStatementNode.addChild(keywordNode);
+        keywordNode.addChild(keywordNode);
 
         // conditionals
         node conditionalNode = new node(new lexeme("conditional"));
@@ -88,6 +92,12 @@ public class expectedOrder {
         rightBlock.addChild(endOfStatementNode);
         nodes.add(rightBlock);
         endOfStatementNode.addChild(rightBlock);
+
+        // function assignment 
+        node functionAssignment = new node(new lexeme("function_assignment"));
+        functionAssignment.addChild(keywordNode);
+        nodes.add(functionAssignment);
+        idNode.addChild(functionAssignment);
     }
 
 	public boolean conforms(lexer lex) {

@@ -27,13 +27,20 @@ import regex.lexer;
 public class interpreter {
     public parser parser;
     public String programText;
+    public String functionText;
 
     public ArrayList<idInfo> ids;
+    public ArrayList<String> functions;
     private boolean inConditional = false;
+    private boolean inFunctionCall = false;
+    private int index = 0;
+    private String results = "";
 
     public interpreter(parser par) {
         // initilize list of arrays
         ids = new ArrayList<idInfo>();
+        // initialize list of function names
+        functions = new ArrayList<String>();
 
         parser = par;
     }
@@ -92,7 +99,7 @@ public class interpreter {
      * compile the class.
      */
     private void compile(boolean printInterpretation) {
-        programText = "public class Test {\n" + "public static void run() {\n" + interpret() + "\n}\n" + "}\n";
+        programText = "import java.util.function.Function;\npublic class Test {\n" + "public static void run() {\n" + interpret() + "\n}\n" + "}\n";
 
         if (printInterpretation) {
             System.out.println("Java Interpretation:");
@@ -142,65 +149,86 @@ public class interpreter {
      * @return A String of Java code.
      */
     private String interpret() {
-        String results = "";
+        results = "";
 
-        String prevId = "";
         lexeme previous = new lexeme(null);
-        for (int i = 0; i < parser.lexer.lexemes.size(); i++) {
+        for (index = 0; index < parser.lexer.lexemes.size(); index++) {
             // get current lexeme
-            lexeme lexeme = parser.lexer.lexemes.get(i);
-            switch (lexeme.name) {
-                case "end_of_statement":
-                    results += (inConditional) ? ")\n" : ";\n";
-                    if (inConditional) {
-                        inConditional = false;
-                    }
-                    break;
-                case "id":
-                    if (!isAlreadyAnId(lexeme.value)) {
-                        results += " " + lexeme.value;
-                        ids.add(new idInfo(lexeme.value, previous.value));
-                    } else if (!previous.name.equals("keyword")) {
-                        results += lexeme.value;
-                    } else if (previous.value.equals("while") || previous.value.equals("if")) {
-                        results += lexeme.value;
-                    }
-                    prevId = lexeme.value;
-                    break;
-                case "assignment":
-                    results += " = ";
-                    break;
-                case "keyword":
-                    results += processKeyword(lexeme, i);
-                    if (lexeme.value.contains("print")) {
-                        i++;
-                    }
-                    break;
-                case "conditional":
-                    if (lexeme.value.equals("=")) {
-                        results += "==";
-                    } else {
-                        results += lexeme.value;
-                    }
-                    break;
-                case "string_literal":
-                case "integer_literal":
-                case "decimal_literal":
-                case "operator":
-                case "start_of_block":
-                case "end_of_block":
-                    results += lexeme.value;
-                    break;
-
-                default:
-                    System.out.println("Unhandled lexeme: " + lexeme.name + " Value: " + lexeme.value);
-                    break;
-            }
+            lexeme lexeme = parser.lexer.lexemes.get(index);
+            results += interpretLexeme(previous, lexeme);
 
             previous = lexeme;
         }
 
         return results;
+    }
+
+    private String interpretLexeme(lexeme previous, lexeme lexeme) {
+        String result = "";
+        switch (lexeme.name) {
+            case "end_of_statement":
+                result += (inConditional || inFunctionCall) ? ((inFunctionCall) ? ");\n" : ")\n") : ";\n";
+                if (inConditional) {
+                    inConditional = false;
+                }
+                if (inFunctionCall) {
+                    inFunctionCall = false;
+                }
+                break;
+            case "id":
+                if (isFunction(lexeme.value)) {
+                    inFunctionCall = true;
+                    result += lexeme.value + ".apply(";
+                } else if (!isAlreadyAnId(lexeme.value)) {
+                    result += " " + lexeme.value;
+                    ids.add(new idInfo(lexeme.value, previous.value));
+                } else if (!previous.name.equals("keyword")) {
+                    result += lexeme.value;
+                } else if (previous.value.equals("while") || previous.value.equals("if") || previous.value.equals("ret")) {
+                    result += lexeme.value;
+                }
+                break;
+            case "assignment":
+                result += " = ";
+                break;
+            case "keyword":
+                result += processKeyword(lexeme);
+                if (lexeme.value.contains("print")) {
+                    index++;
+                }
+                break;
+            case "conditional":
+                if (lexeme.value.equals("=")) {
+                    result += "==";
+                } else {
+                    result += lexeme.value;
+                }
+                break;
+            case "end_of_block":
+            result += lexeme.value;
+                break;
+            case "string_literal":
+            case "integer_literal":
+            case "decimal_literal":
+            case "operator":
+            case "start_of_block":
+                result += lexeme.value;
+                break;
+
+            default:
+                System.out.println("Unhandled lexeme: " + lexeme.name + " Value: " + lexeme.value);
+                break;
+        }
+        return result;
+    }
+
+    private boolean isFunction(String value) {
+        for (String funcName : functions) {
+            if (funcName.equals(value)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -226,12 +254,12 @@ public class interpreter {
      *               parse tree.
      * @return the interpreted String for the given lexeme.
      */
-    private String processKeyword(lexeme lexeme, int i) {
+    private String processKeyword(lexeme lexeme) {
         lexeme nextLexeme = null;
         switch (lexeme.value) {
             case "print":
-                if (parser.lexer.lexemes.size() > i + 1) {
-                    nextLexeme = parser.lexer.lexemes.get(i + 1);
+                if (parser.lexer.lexemes.size() > index + 1) {
+                    nextLexeme = parser.lexer.lexemes.get(index + 1);
                 }
                 if (nextLexeme != null) {
                     return "System.out.print(" + nextLexeme.value + ");\n";
@@ -239,8 +267,8 @@ public class interpreter {
                     return "System.out.print();\n";
                 }
             case "printl":
-                if (parser.lexer.lexemes.size() > i + 1) {
-                    nextLexeme = parser.lexer.lexemes.get(i + 1);
+                if (parser.lexer.lexemes.size() > index + 1) {
+                    nextLexeme = parser.lexer.lexemes.get(index + 1);
                 }
                 if (nextLexeme != null && !nextLexeme.name.equals("end_of_statement")) {
                     return "System.out.println(" + nextLexeme.value + ");\n";
@@ -259,11 +287,68 @@ public class interpreter {
             case "if":
                 inConditional = true;
                 return "if(";
+            case "ret":
+                return "return ";
+            case "func":
+                // Function<String, Integer> func = x -> { return x.length(); };
+                index++;
+                lexeme prevLexeme = parser.lexer.lexemes.get(index);
+                String input = interpretLexeme(lexeme, prevLexeme), output = null;
+                // get function name
+                index++;
+                nextLexeme = parser.lexer.lexemes.get(index);
+                if (!nextLexeme.name.equals("id")) {
+                    throw new Error("No function name supplied!");
+                }
+                String functionName = nextLexeme.value;
+                // make sure function assignment was used
+                index++;
+                nextLexeme = parser.lexer.lexemes.get(index);
+                if (!nextLexeme.name.equals("function_assignment")) {
+                    throw new Error("Missing function assignment '->'");
+                }
+                // get output type for function
+                index++;
+                nextLexeme = parser.lexer.lexemes.get(index);
+                output = interpretLexeme(prevLexeme, nextLexeme);
+                // get paramater name
+                index++;
+                nextLexeme = parser.lexer.lexemes.get(index);
+                if (!nextLexeme.name.equals("id")) {
+                    throw new Error("No function paramater name supplied!");
+                }
+                String param = interpretLexeme(prevLexeme, nextLexeme);
+                // add param to ids
+                ids.add(new idInfo(param, output));
+                // get end of statement
+                index++;
+                nextLexeme = parser.lexer.lexemes.get(index);
+                if (!nextLexeme.name.equals("end_of_statement")) {
+                    throw new Error("Expected end of statement!");
+                }
+                // add function to list
+                functions.add(functionName);
+                return "Function<" + getFunctionType(input) + "," + getFunctionType(output) + "> " + functionName 
+                                + "=" + param + "->";
 
             default:
                 break;
         }
         return null;
+    }
+
+    private String getFunctionType(String type) {
+        switch (type) {
+            case "int":
+                return "Integer";
+            case "String":
+                return "String";
+            case "double":
+                return "Double";
+        
+            default:
+                return "Object";
+        }
     }
 
     /**

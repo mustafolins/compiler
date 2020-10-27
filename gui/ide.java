@@ -2,6 +2,7 @@ package gui;
 
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
@@ -31,42 +32,44 @@ public class ide {
 
     public ide() {
         frame = new JFrame("IDE");
-        frame.setSize(800, 500);
-        frame.setMinimumSize(new Dimension(800, 500));
+        frame.setSize(1200, 800);
+        frame.setMinimumSize(new Dimension(1200, 800));
         frame.setResizable(false);
 
         // show lexer output
         showLexer = new JCheckBox("Show Lexemes");
         showLexer.setSelected(true);
-        showLexer.setBounds(410, 10, 140, 30);
+        showLexer.setBounds(610, 10, 140, 30);
 
         frame.add(showLexer);
 
         // show interpretation check box
         showInterpretation = new JCheckBox("Show Interpretation");
         showInterpretation.setSelected(true);
-        showInterpretation.setBounds(560, 10, 140, 30);
+        showInterpretation.setBounds(760, 10, 140, 30);
 
         frame.add(showInterpretation);
 
         // code area
         codeTextArea = new JTextPane();
-        codeTextArea.setBounds(10, 50, 380, 400);
+        codeTextArea.setBounds(10, 50, 580, 700);
         codeTextArea.setBackground(Color.darkGray);
         codeTextArea.setForeground(Color.white);
+        codeTextArea.setFont(new Font("Consolas", Font.PLAIN, 14));
         codeScrollPane = new JScrollPane(codeTextArea, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
                 JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-        codeScrollPane.setBounds(10, 50, 380, 400);
+        codeScrollPane.setBounds(10, 50, 580, 700);
 
         frame.add(codeScrollPane);
 
         // output
         outputTextArea = new JTextPane();
-        outputTextArea.setBounds(410, 50, 360, 400);
+        outputTextArea.setBounds(610, 50, 565, 700);
         outputTextArea.setBackground(Color.black);
+        outputTextArea.setFont(new Font("Calibri", Font.PLAIN, 14));
         outputScrollPane = new JScrollPane(outputTextArea, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
                 JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-        outputScrollPane.setBounds(410, 50, 360, 400);
+        outputScrollPane.setBounds(610, 50, 565, 700);
 
         frame.add(outputScrollPane);
 

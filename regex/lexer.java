@@ -24,13 +24,16 @@ public class lexer {
     private regex operatorReg = new regex("^[\\+\\*\\/\\-]");
     private regex conditionalReg = new regex("^[<>=][=]*");
     private regex assignmentReg = new regex("^[:]");
+    private regex functionAssignmentReg = new regex("^\\->");
 
     private ArrayList<String> keywords;
+    private ArrayList<String> keywordsDescription;
     private String lastKeyword;
 
     public lexer() {
         lexemes = new ArrayList<lexeme>();
         keywords = new ArrayList<String>();
+        keywordsDescription = new ArrayList<String>();
 
         initializeKeywords();
     }
@@ -68,13 +71,24 @@ public class lexer {
     }
 
     private void initializeKeywords() {
+        keywords.add("ret");
+        keywordsDescription.add("Signals that the preceding statement should be returned.");
+        keywords.add("func");
+        keywordsDescription.add("The start of the declaration of a function.");
         keywords.add("while");
+        keywordsDescription.add("The start of a while loop.");
         keywords.add("if");
+        keywordsDescription.add("The start of an if statement.");
         keywords.add("printl");
+        keywordsDescription.add("Prints a line of text.");
         keywords.add("print");
+        keywordsDescription.add("Prints the given string/id without new line.");
         keywords.add("integer");
+        keywordsDescription.add("Initializes an integer type.");
         keywords.add("decimal");
+        keywordsDescription.add("Initializes a decimal type.");
         keywords.add("string");
+        keywordsDescription.add("Initializes a string literal.");
     }
 
     public boolean isKeyword(String str) {
@@ -92,8 +106,13 @@ public class lexer {
      */
     public String toString() {
         String result = "Lexer Output:\n";
-        for (lexeme lexeme : lexemes) {
-            result += lexeme + "\n";
+        for (int i = 0; i < lexemes.size(); i++) {
+            lexeme lexeme = lexemes.get(i);
+            if (lexeme.name.equals("keyword")) {
+                result += lexeme + "\t" + keywordsDescription.get(keywords.indexOf(lexeme.value)) + "\n";
+            } else {
+                result += lexeme + "\n";
+            }
         }
         return result;
     }
@@ -118,6 +137,12 @@ public class lexer {
                 str = str.replaceFirst(Pattern.quote(endOfBlockReg.lastMatch), "");
                 lexemes.add(new lexeme("end_of_block", endOfBlockReg.lastMatch));
                 lastMatch = endOfBlockReg.lastMatch;
+            }
+            // fucntion assignment
+            else if (functionAssignmentReg.isMatch(str)) {
+                str = str.replaceFirst(Pattern.quote(functionAssignmentReg.lastMatch), "");
+                lexemes.add(new lexeme("function_assignment", functionAssignmentReg.lastMatch));
+                lastMatch = functionAssignmentReg.lastMatch;
             }
             // conditionals
             else if (conditionalReg.isMatch(str)) {
@@ -187,5 +212,7 @@ public class lexer {
                 throw new Error("Unable to process string lexeme not found.");
             }
         }
+        // add an end of statement just in case the code doesn't end with one
+        lexemes.add(new lexeme("end_of_statement", "\n"));
     }
 }

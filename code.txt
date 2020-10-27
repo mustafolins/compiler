@@ -21,3 +21,23 @@ while num >= 10
     ~ decrement num
     num : num - 1
 }
+func integer addOne -> integer x
+{
+    ret x + 1
+}
+printl num
+num : addOne num
+printl num
+func integer factorial -> integer number
+{
+    integer result : 1
+    while number >= 1
+    {
+        result : result * number
+        number : number - 1
+    }
+    ret result
+}
+print "Factorial of 5: "
+integer factOf5 : factorial 5
+printl factOf5
