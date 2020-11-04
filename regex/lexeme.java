@@ -1,14 +1,14 @@
 package regex;
 
 public class lexeme {
-    public String name;
+    public lexType name;
     public String value;
 
-    public lexeme(String n){
+    public lexeme(lexType n){
         name = n;
     }
 
-    public lexeme(String n, String v){
+    public lexeme(lexType n, String v){
         name = n;
         value = v;
     }

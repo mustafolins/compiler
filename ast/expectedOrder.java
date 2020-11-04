@@ -2,6 +2,7 @@ package ast;
 
 import java.util.ArrayList;
 
+import regex.lexType;
 import regex.lexeme;
 import regex.lexer;
 
@@ -12,30 +13,30 @@ public class expectedOrder {
         nodes = new ArrayList<node>();
 
         // id expectations
-        node idNode = new node(new lexeme("id"));
+        node idNode = new node(new lexeme(lexType.id));
         nodes.add(idNode);
         idNode.addChild(idNode);
 
         // end of statement expextations
-        node endOfStatementNode = new node(new lexeme("end_of_statement"));
+        node endOfStatementNode = new node(new lexeme(lexType.end_of_statement));
         endOfStatementNode.addChild(idNode);
         nodes.add(endOfStatementNode);
         idNode.addChild(endOfStatementNode);
         endOfStatementNode.addChild(endOfStatementNode);
 
         // operator expectations
-        node operatorNode = new node(new lexeme("operator"));
+        node operatorNode = new node(new lexeme(lexType.operator));
         operatorNode.addChild(idNode);
         nodes.add(operatorNode);
         idNode.addChild(operatorNode);
 
         // string literal expectations
-        node stringNode = new node(new lexeme("string_literal"));
+        node stringNode = new node(new lexeme(lexType.string_literal));
         stringNode.addChild(endOfStatementNode);
         nodes.add(stringNode);
 
         // integer literal expectations
-        node intNode = new node(new lexeme("integer_literal"));
+        node intNode = new node(new lexeme(lexType.integer_literal));
         intNode.addChild(endOfStatementNode);
         intNode.addChild(operatorNode);
         intNode.addChild(idNode);
@@ -44,14 +45,14 @@ public class expectedOrder {
         idNode.addChild(intNode);
         
         // decimal literal expectations
-        node decNode = new node(new lexeme("decimal_literal"));
+        node decNode = new node(new lexeme(lexType.decimal_literal));
         decNode.addChild(endOfStatementNode);
         decNode.addChild(operatorNode);
         nodes.add(decNode);
         operatorNode.addChild(decNode);
 
         // assignment
-        node assignmentNode = new node(new lexeme("assignment"));
+        node assignmentNode = new node(new lexeme(lexType.assignment));
         assignmentNode.addChild(stringNode);
         assignmentNode.addChild(decNode);
         assignmentNode.addChild(intNode);
@@ -60,7 +61,7 @@ public class expectedOrder {
         idNode.addChild(assignmentNode);
 
         // keyword expextations
-        node keywordNode = new node(new lexeme("keyword"));
+        node keywordNode = new node(new lexeme(lexType.keyword));
         keywordNode.addChild(idNode);
         keywordNode.addChild(endOfStatementNode);
         keywordNode.addChild(stringNode);
@@ -71,7 +72,7 @@ public class expectedOrder {
         keywordNode.addChild(keywordNode);
 
         // conditionals
-        node conditionalNode = new node(new lexeme("conditional"));
+        node conditionalNode = new node(new lexeme(lexType.conditional));
         conditionalNode.addChild(intNode);
         conditionalNode.addChild(decNode);
         conditionalNode.addChild(stringNode);
@@ -82,19 +83,19 @@ public class expectedOrder {
         idNode.addChild(conditionalNode);
 
         // left code block
-        node leftBlock = new node(new lexeme("start_of_block"));
+        node leftBlock = new node(new lexeme(lexType.start_of_block));
         leftBlock.addChild(endOfStatementNode);
         nodes.add(leftBlock);
         endOfStatementNode.addChild(leftBlock);
 
         // right code block
-        node rightBlock = new node(new lexeme("end_of_block"));
+        node rightBlock = new node(new lexeme(lexType.end_of_block));
         rightBlock.addChild(endOfStatementNode);
         nodes.add(rightBlock);
         endOfStatementNode.addChild(rightBlock);
 
         // function assignment 
-        node functionAssignment = new node(new lexeme("function_assignment"));
+        node functionAssignment = new node(new lexeme(lexType.function_assignment));
         functionAssignment.addChild(keywordNode);
         nodes.add(functionAssignment);
         idNode.addChild(functionAssignment);

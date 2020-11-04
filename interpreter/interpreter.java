@@ -21,6 +21,7 @@ import javax.tools.StandardLocation;
 import javax.tools.ToolProvider;
 
 import ast.parser;
+import regex.lexType;
 import regex.lexeme;
 import regex.lexer;
 
@@ -166,7 +167,7 @@ public class interpreter {
     private String interpretLexeme(lexeme previous, lexeme lexeme) {
         String result = "";
         switch (lexeme.name) {
-            case "end_of_statement":
+            case end_of_statement:
                 result += (inConditional || inFunctionCall) ? ((inFunctionCall) ? ");\n" : ")\n") : ";\n";
                 if (inConditional) {
                     inConditional = false;
@@ -175,43 +176,43 @@ public class interpreter {
                     inFunctionCall = false;
                 }
                 break;
-            case "id":
+            case id:
                 if (isFunction(lexeme.value)) {
                     inFunctionCall = true;
                     result += lexeme.value + ".apply(";
                 } else if (!isAlreadyAnId(lexeme.value)) {
                     result += " " + lexeme.value;
                     ids.add(new idInfo(lexeme.value, previous.value));
-                } else if (!previous.name.equals("keyword")) {
+                } else if (previous.name != lexType.keyword) {
                     result += lexeme.value;
                 } else if (previous.value.equals("while") || previous.value.equals("if") || previous.value.equals("ret")) {
                     result += lexeme.value;
                 }
                 break;
-            case "assignment":
+            case assignment:
                 result += " = ";
                 break;
-            case "keyword":
+            case keyword:
                 result += processKeyword(lexeme);
                 if (lexeme.value.contains("print")) {
                     index++;
                 }
                 break;
-            case "conditional":
+            case conditional:
                 if (lexeme.value.equals("=")) {
                     result += "==";
                 } else {
                     result += lexeme.value;
                 }
                 break;
-            case "end_of_block":
+            case end_of_block:
             result += lexeme.value;
                 break;
-            case "string_literal":
-            case "integer_literal":
-            case "decimal_literal":
-            case "operator":
-            case "start_of_block":
+            case string_literal:
+            case integer_literal:
+            case decimal_literal:
+            case operator:
+            case start_of_block:
                 result += lexeme.value;
                 break;
 
@@ -270,7 +271,7 @@ public class interpreter {
                 if (parser.lexer.lexemes.size() > index + 1) {
                     nextLexeme = parser.lexer.lexemes.get(index + 1);
                 }
-                if (nextLexeme != null && !nextLexeme.name.equals("end_of_statement")) {
+                if (nextLexeme != null && nextLexeme.name != lexType.end_of_statement) {
                     return "System.out.println(" + nextLexeme.value + ");\n";
                 } else {
                     return "System.out.println();\n";
@@ -297,14 +298,14 @@ public class interpreter {
                 // get function name
                 index++;
                 nextLexeme = parser.lexer.lexemes.get(index);
-                if (!nextLexeme.name.equals("id")) {
+                if (nextLexeme.name != lexType.id) {
                     throw new Error("No function name supplied!");
                 }
                 String functionName = nextLexeme.value;
                 // make sure function assignment was used
                 index++;
                 nextLexeme = parser.lexer.lexemes.get(index);
-                if (!nextLexeme.name.equals("function_assignment")) {
+                if (nextLexeme.name != lexType.function_assignment) {
                     throw new Error("Missing function assignment '->'");
                 }
                 // get output type for function
@@ -314,7 +315,7 @@ public class interpreter {
                 // get paramater name
                 index++;
                 nextLexeme = parser.lexer.lexemes.get(index);
-                if (!nextLexeme.name.equals("id")) {
+                if (nextLexeme.name != lexType.id) {
                     throw new Error("No function paramater name supplied!");
                 }
                 String param = interpretLexeme(prevLexeme, nextLexeme);
@@ -323,7 +324,7 @@ public class interpreter {
                 // get end of statement
                 index++;
                 nextLexeme = parser.lexer.lexemes.get(index);
-                if (!nextLexeme.name.equals("end_of_statement")) {
+                if (nextLexeme.name != lexType.end_of_statement) {
                     throw new Error("Expected end of statement!");
                 }
                 // add function to list

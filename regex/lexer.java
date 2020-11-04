@@ -108,7 +108,7 @@ public class lexer {
         String result = "Lexer Output:\n";
         for (int i = 0; i < lexemes.size(); i++) {
             lexeme lexeme = lexemes.get(i);
-            if (lexeme.name.equals("keyword")) {
+            if (lexeme.name == lexType.keyword) {
                 result += lexeme + "\t" + keywordsDescription.get(keywords.indexOf(lexeme.value)) + "\n";
             } else {
                 result += lexeme + "\n";
@@ -129,61 +129,61 @@ public class lexer {
             // start of block
             else if (startOfBlockReg.isMatch(str)) {
                 str = str.replaceFirst(Pattern.quote(startOfBlockReg.lastMatch), "");
-                lexemes.add(new lexeme("start_of_block", startOfBlockReg.lastMatch));
+                lexemes.add(new lexeme(lexType.start_of_block, startOfBlockReg.lastMatch));
                 lastMatch = startOfBlockReg.lastMatch;
             }
             // end of block
             else if (endOfBlockReg.isMatch(str)) {
                 str = str.replaceFirst(Pattern.quote(endOfBlockReg.lastMatch), "");
-                lexemes.add(new lexeme("end_of_block", endOfBlockReg.lastMatch));
+                lexemes.add(new lexeme(lexType.end_of_block, endOfBlockReg.lastMatch));
                 lastMatch = endOfBlockReg.lastMatch;
             }
             // fucntion assignment
             else if (functionAssignmentReg.isMatch(str)) {
                 str = str.replaceFirst(Pattern.quote(functionAssignmentReg.lastMatch), "");
-                lexemes.add(new lexeme("function_assignment", functionAssignmentReg.lastMatch));
+                lexemes.add(new lexeme(lexType.function_assignment, functionAssignmentReg.lastMatch));
                 lastMatch = functionAssignmentReg.lastMatch;
             }
             // conditionals
             else if (conditionalReg.isMatch(str)) {
                 str = str.replaceFirst(Pattern.quote(conditionalReg.lastMatch), "");
-                lexemes.add(new lexeme("conditional", conditionalReg.lastMatch));
+                lexemes.add(new lexeme(lexType.conditional, conditionalReg.lastMatch));
                 lastMatch = conditionalReg.lastMatch;
             }
             // keywords
             else if (isKeyword(str)) {
                 str = str.replaceFirst(lastKeyword, "");
-                lexemes.add(new lexeme("keyword", lastKeyword));
+                lexemes.add(new lexeme(lexType.keyword, lastKeyword));
                 lastMatch = lastKeyword;
             }
             // assignment
             else if (assignmentReg.isMatch(str)) {
                 str = str.replaceFirst(assignmentReg.lastMatch, "");
-                lexemes.add(new lexeme("assignment", assignmentReg.lastMatch));
+                lexemes.add(new lexeme(lexType.assignment, assignmentReg.lastMatch));
                 lastMatch = assignmentReg.lastMatch;
             }
             // ids for variable names
             else if (idReg.isMatch(str)) {
                 str = str.replaceFirst(idReg.lastMatch, "");
-                lexemes.add(new lexeme("id", idReg.lastMatch));
+                lexemes.add(new lexeme(lexType.id, idReg.lastMatch));
                 lastMatch = idReg.lastMatch;
             }
             // strings
             else if (stringLiteralReg.isMatch(str)) {
                 str = str.replaceFirst(stringLiteralReg.lastMatch, "");
-                lexemes.add(new lexeme("string_literal", stringLiteralReg.lastMatch));
+                lexemes.add(new lexeme(lexType.string_literal, stringLiteralReg.lastMatch));
                 lastMatch = stringLiteralReg.lastMatch;
             }
             // decimals
             else if (decimalLiteralReg.isMatch(str)) {
                 str = str.replaceFirst(decimalLiteralReg.lastMatch, "");
-                lexemes.add(new lexeme("decimal_literal", decimalLiteralReg.lastMatch));
+                lexemes.add(new lexeme(lexType.decimal_literal, decimalLiteralReg.lastMatch));
                 lastMatch = decimalLiteralReg.lastMatch;
             }
             // integers
             else if (integerLiteralReg.isMatch(str)) {
                 str = str.replaceFirst(integerLiteralReg.lastMatch, "");
-                lexemes.add(new lexeme("integer_literal", integerLiteralReg.lastMatch));
+                lexemes.add(new lexeme(lexType.integer_literal, integerLiteralReg.lastMatch));
                 lastMatch = integerLiteralReg.lastMatch;
             }
             // operators
@@ -191,13 +191,13 @@ public class lexer {
                 // pattern.qoute here to force java to not use it's automatic regex crap since
                 // (+, *) are reserved characters
                 str = str.replaceFirst(Pattern.quote(operatorReg.lastMatch), "");
-                lexemes.add(new lexeme("operator", operatorReg.lastMatch));
+                lexemes.add(new lexeme(lexType.operator, operatorReg.lastMatch));
                 lastMatch = operatorReg.lastMatch;
             }
             // end of statement
             else if (endOfStatementReg.isMatch(str)) {
                 str = str.replaceFirst(endOfStatementReg.lastMatch, "");
-                lexemes.add(new lexeme("end_of_statement", endOfStatementReg.lastMatch));
+                lexemes.add(new lexeme(lexType.end_of_statement, endOfStatementReg.lastMatch));
                 lastMatch = endOfStatementReg.lastMatch;
             }
             // seperator
@@ -213,6 +213,6 @@ public class lexer {
             }
         }
         // add an end of statement just in case the code doesn't end with one
-        lexemes.add(new lexeme("end_of_statement", "\n"));
+        lexemes.add(new lexeme(lexType.end_of_statement, "\n"));
     }
 }
