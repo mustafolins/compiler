@@ -5,12 +5,17 @@ This is a simple programming language that has been written for a programming la
 Factorial example:
 
 ```vb
-integer num : 5
-integer factorial : 1
-while num >= 1
+func integer factorial -> integer number
 {
-    factorial : factorial * num
-    num : num - 1
+    integer result : 1
+    while number >= 1
+    {
+        result : result * number
+        number : number - 1
+    }
+    ret result
 }
-printl factorial
+print "Factorial of 5: "
+integer factOf5 : factorial 5
+printl factOf5
 ```
