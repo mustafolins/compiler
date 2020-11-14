@@ -1,29 +1,23 @@
 package ast;
 
-import java.util.ArrayList;
+import java.util.Dictionary;
+import java.util.Hashtable;
 
+import regex.lexType;
 import regex.lexeme;
 
 public class node {
     public lexeme current;
-    public ArrayList<node> children;
+    public Dictionary<lexType, node> children;
 
     public node(lexeme c) {
         current = c;
         if (children == null) {
-            children = new ArrayList<node>();
-        }
-    }
-
-    public node(lexeme c, node n) {
-        current = c;
-        if (n != null) {
-            children = new ArrayList<node>();
-            children.add(n);
+            children = new Hashtable<lexType, node>();
         }
     }
 
     public void addChild(node child){
-        children.add(child);
+        children.put(child.current.type, child);
     }
 }

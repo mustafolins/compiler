@@ -17,6 +17,7 @@ import javax.tools.JavaFileObject;
 import javax.tools.StandardJavaFileManager;
 import javax.tools.StandardLocation;
 import javax.tools.ToolProvider;
+import javax.tools.JavaCompiler.CompilationTask;
 
 import ast.parser;
 
@@ -73,7 +74,7 @@ public class interpreter {
         try {
             // File temp = File.createTempFile("Test", ".java");
             File temp = new File("Test.java");
-            temp.deleteOnExit();
+            // temp.deleteOnExit();
             File parentDirectory = new File(System.getProperty("user.dir"));
             FileWriter writer = new FileWriter(temp);
             writer.write(programText);
@@ -87,9 +88,9 @@ public class interpreter {
                     .getJavaFileObjectsFromFiles(Arrays.asList(temp));
             // compile source code
             System.out.println("Compiling...");
-            boolean compiled = compiler.getTask(null, fileManager, null, null, null, compilationUnits).call();
-            // close file manager
-            fileManager.close();
+            new File("Test.class").delete();
+            CompilationTask ct = compiler.getTask(null, fileManager, null, null, null, compilationUnits);
+            boolean compiled = ct.call();
 
             // run the compiled class
             if (compiled) {
@@ -97,7 +98,12 @@ public class interpreter {
             } else {
                 System.out.println("Failed to compile!");
             }
+            
+            // close file manager
+            fileManager.close();
 
+            // delete .java and .class file
+            temp.delete();
         } catch (IOException e) {
             e.printStackTrace();
         } catch (IllegalArgumentException e) {
@@ -126,9 +132,13 @@ public class interpreter {
                     // delete class and java files
                     Files.delete(Paths.get(parentDirectory + "/" + "Test.java"));
                     Files.delete(Paths.get(parentDirectory + "/" + "Test.class"));
+
+                    classLoader.close();
                     return;
                 }
             }
+
+            classLoader.close();
         } catch (MalformedURLException e) {
             e.printStackTrace();
         } catch (ClassNotFoundException e) {

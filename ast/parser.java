@@ -79,7 +79,7 @@ public class parser {
 
     private String interpretLexeme(lexeme previous, lexeme lexeme) {
         String result = "";
-        switch (lexeme.name) {
+        switch (lexeme.type) {
             case end_of_statement:
                 result += (inConditional || inFunctionCall) ? ((inFunctionCall) ? ");\n" : ")\n") : ";\n";
                 if (inConditional) {
@@ -96,7 +96,7 @@ public class parser {
                 } else if (!isAlreadyAnId(lexeme.value)) {
                     result += " " + lexeme.value;
                     ids.add(new idInfo(lexeme.value, previous.value));
-                } else if (previous.name != lexType.keyword) {
+                } else if (previous.type != lexType.keyword) {
                     result += lexeme.value;
                 } else if (previous.value.equals("while") || previous.value.equals("if") || previous.value.equals("ret")) {
                     result += lexeme.value;
@@ -130,7 +130,7 @@ public class parser {
                 break;
 
             default:
-                System.out.println("Unhandled lexeme: " + lexeme.name + " Value: " + lexeme.value);
+                System.out.println("Unhandled lexeme: " + lexeme.type + " Value: " + lexeme.value);
                 break;
         }
         return result;
@@ -184,7 +184,7 @@ public class parser {
                 if (lexer.lexemes.size() > index + 1) {
                     nextLexeme = lexer.lexemes.get(index + 1);
                 }
-                if (nextLexeme != null && nextLexeme.name != lexType.end_of_statement) {
+                if (nextLexeme != null && nextLexeme.type != lexType.end_of_statement) {
                     return "System.out.println(" + nextLexeme.value + ");\n";
                 } else {
                     return "System.out.println();\n";
@@ -211,14 +211,14 @@ public class parser {
                 // get function name
                 index++;
                 nextLexeme = lexer.lexemes.get(index);
-                if (nextLexeme.name != lexType.id) {
+                if (nextLexeme.type != lexType.id) {
                     throw new Error("No function name supplied!");
                 }
                 String functionName = nextLexeme.value;
                 // make sure function assignment was used
                 index++;
                 nextLexeme = lexer.lexemes.get(index);
-                if (nextLexeme.name != lexType.function_assignment) {
+                if (nextLexeme.type != lexType.function_assignment) {
                     throw new Error("Missing function assignment '->'");
                 }
                 // get output type for function
@@ -228,7 +228,7 @@ public class parser {
                 // get paramater name
                 index++;
                 nextLexeme = lexer.lexemes.get(index);
-                if (nextLexeme.name != lexType.id) {
+                if (nextLexeme.type != lexType.id) {
                     throw new Error("No function paramater name supplied!");
                 }
                 String param = interpretLexeme(prevLexeme, nextLexeme);
@@ -237,7 +237,7 @@ public class parser {
                 // get end of statement
                 index++;
                 nextLexeme = lexer.lexemes.get(index);
-                if (nextLexeme.name != lexType.end_of_statement) {
+                if (nextLexeme.type != lexType.end_of_statement) {
                     throw new Error("Expected end of statement!");
                 }
                 // add function to list

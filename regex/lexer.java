@@ -86,7 +86,7 @@ public class lexer {
         String result = "Lexer Output:\n";
         for (int i = 0; i < lexemes.size(); i++) {
             lexeme lexeme = lexemes.get(i);
-            if (lexeme.name == lexType.keyword) {
+            if (lexeme.type == lexType.keyword) {
                 result += lexeme + "\t" + keywordsDescription.get(keywords.indexOf(lexeme.value)) + "\n";
             } else {
                 result += lexeme + "\n";

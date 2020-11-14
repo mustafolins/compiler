@@ -1,46 +1,50 @@
 package ast;
 
-import java.util.ArrayList;
+import java.util.Dictionary;
+import java.util.Hashtable;
 
 import regex.lexType;
 import regex.lexeme;
 import regex.lexer;
 
 public class expectedOrder {
-    private ArrayList<node> nodes;
+    /**
+     * The syntax tree nodes.
+     */
+    private Dictionary<lexType, node> nodes;
 
     public expectedOrder(){
-        nodes = new ArrayList<node>();
+        nodes = new Hashtable<lexType, node>();
 
         // id expectations
         node idNode = new node(new lexeme(lexType.id));
-        nodes.add(idNode);
+        nodes.put(lexType.id, idNode);
         idNode.addChild(idNode);
 
         // end of statement expextations
         node endOfStatementNode = new node(new lexeme(lexType.end_of_statement));
         endOfStatementNode.addChild(idNode);
-        nodes.add(endOfStatementNode);
+        nodes.put(lexType.end_of_statement, endOfStatementNode);
         idNode.addChild(endOfStatementNode);
         endOfStatementNode.addChild(endOfStatementNode);
 
         // operator expectations
         node operatorNode = new node(new lexeme(lexType.operator));
         operatorNode.addChild(idNode);
-        nodes.add(operatorNode);
+        nodes.put(lexType.operator, operatorNode);
         idNode.addChild(operatorNode);
 
         // string literal expectations
         node stringNode = new node(new lexeme(lexType.string_literal));
         stringNode.addChild(endOfStatementNode);
-        nodes.add(stringNode);
+        nodes.put(lexType.string_literal, stringNode);
 
         // integer literal expectations
         node intNode = new node(new lexeme(lexType.integer_literal));
         intNode.addChild(endOfStatementNode);
         intNode.addChild(operatorNode);
         intNode.addChild(idNode);
-        nodes.add(intNode);
+        nodes.put(lexType.integer_literal, intNode);
         operatorNode.addChild(intNode);
         idNode.addChild(intNode);
         
@@ -48,7 +52,7 @@ public class expectedOrder {
         node decNode = new node(new lexeme(lexType.decimal_literal));
         decNode.addChild(endOfStatementNode);
         decNode.addChild(operatorNode);
-        nodes.add(decNode);
+        nodes.put(lexType.decimal_literal, decNode);
         operatorNode.addChild(decNode);
 
         // assignment
@@ -57,7 +61,7 @@ public class expectedOrder {
         assignmentNode.addChild(decNode);
         assignmentNode.addChild(intNode);
         assignmentNode.addChild(idNode);
-        nodes.add(assignmentNode);
+        nodes.put(lexType.assignment, assignmentNode);
         idNode.addChild(assignmentNode);
 
         // keyword expextations
@@ -67,7 +71,7 @@ public class expectedOrder {
         keywordNode.addChild(stringNode);
         keywordNode.addChild(intNode);
         keywordNode.addChild(decNode);
-        nodes.add(keywordNode);
+        nodes.put(lexType.keyword, keywordNode);
         endOfStatementNode.addChild(keywordNode);
         keywordNode.addChild(keywordNode);
 
@@ -76,7 +80,7 @@ public class expectedOrder {
         conditionalNode.addChild(intNode);
         conditionalNode.addChild(decNode);
         conditionalNode.addChild(stringNode);
-        nodes.add(conditionalNode);
+        nodes.put(lexType.conditional, conditionalNode);
         decNode.addChild(conditionalNode);
         intNode.addChild(conditionalNode);
         stringNode.addChild(conditionalNode);
@@ -85,22 +89,27 @@ public class expectedOrder {
         // left code block
         node leftBlock = new node(new lexeme(lexType.start_of_block));
         leftBlock.addChild(endOfStatementNode);
-        nodes.add(leftBlock);
+        nodes.put(lexType.start_of_block, leftBlock);
         endOfStatementNode.addChild(leftBlock);
 
         // right code block
         node rightBlock = new node(new lexeme(lexType.end_of_block));
         rightBlock.addChild(endOfStatementNode);
-        nodes.add(rightBlock);
+        nodes.put(lexType.end_of_block, rightBlock);
         endOfStatementNode.addChild(rightBlock);
 
         // function assignment 
         node functionAssignment = new node(new lexeme(lexType.function_assignment));
         functionAssignment.addChild(keywordNode);
-        nodes.add(functionAssignment);
+        nodes.put(lexType.function_assignment, functionAssignment);
         idNode.addChild(functionAssignment);
     }
 
+    /**
+     * Loops through the lexemes in the lexer and checks that they are all in the correct order.
+     * @param lex The lexer to check that the lexemes are in order.
+     * @return True if all lexemes are in the correct order False otherwise.
+     */
 	public boolean conforms(lexer lex) {
         // initialize previous lexeme which should be nothing at the begginning
         lexeme curLexeme = new lexeme(null);
@@ -116,23 +125,26 @@ public class expectedOrder {
 		return true;
 	}
 
+    /**
+     * Checks that the next lexeme can come after the next lexeme.
+     * @param curLexeme The current lexeme.
+     * @param nextLexeme The next lexeme.
+     * @return True if nextLexeme can come after curLexeme.
+     */
     private boolean hasCorrectOrder(lexeme curLexeme, lexeme nextLexeme) {
         // has no next lexeme so anything should be excepted
-        if (nextLexeme.name == null) {
+        if (nextLexeme.type == null) {
             return true;
         }
-        
-        // loop through parent nodes
-        for (node parent : nodes) {
-            // if there is a match loop through children nodes
-            if (parent.current.name.equals(curLexeme.name)) {
-                // loop through all the children nodes of the current parent
-                for (node child : parent.children) {
-                    // if there's a match than it is in order
-                    if (child.current.name.equals(nextLexeme.name)) {
-                        return true;
-                    }
-                }
+
+        // get node
+        node parent = nodes.get(curLexeme.type);
+        if (parent != null) {
+            // get child if it exists in current node
+            node child = parent.children.get(nextLexeme.type);
+            // return true if the child is not null
+            if (child != null) {
+                return true;
             }
         }
 

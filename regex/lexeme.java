@@ -1,19 +1,19 @@
 package regex;
 
 public class lexeme {
-    public lexType name;
+    public lexType type;
     public String value;
 
     public lexeme(lexType n){
-        name = n;
+        type = n;
     }
 
     public lexeme(lexType n, String v){
-        name = n;
+        type = n;
         value = v;
     }
 
     public String toString(){
-        return name + ": " + value;
+        return type + ": " + value;
     }
 }
