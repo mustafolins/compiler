@@ -1,10 +1,6 @@
 package regex;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.regex.Pattern;
 
 /**
@@ -51,24 +47,6 @@ public class lexer {
 
     //     System.out.println(lex);
     // }
-
-    private static String ReadFile(String file) {
-        try {
-            String str = "";
-            List<String> strings = Files.readAllLines(Paths.get(file));
-            for (String string : strings) {
-                str += string + "\n";
-            }
-            return str;
-        } catch (SecurityException e) {
-            System.out.println("An error occurred.");
-            e.printStackTrace();
-        } catch (IOException e) {
-            System.out.println("An error occurred.");
-            e.printStackTrace();
-        }
-        return null;
-    }
 
     private void initializeKeywords() {
         keywords.add("ret");

@@ -1,4 +1,4 @@
-package interpreter;
+package ast;
 
 public class idInfo {
     public String id;
