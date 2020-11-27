@@ -9,6 +9,7 @@ import regex.lexer;
 public class parser {
     public expectedOrder eo;
     public lexer lexer;
+    public ArrayList<parseTree> parseTrees;
 
     /** The interpreted Java program. */
     public String programText;
@@ -19,7 +20,8 @@ public class parser {
     private boolean inFunctionCall = false;
 
     /** The current lexeme to process */
-    private int index = 0;
+    // private int index = 0;
+    parseTree cur = null;
     private String results = "";
 
     public ArrayList<idInfo> ids;
@@ -33,6 +35,9 @@ public class parser {
         ids = new ArrayList<idInfo>();
         // initialize list of function names
         functions = new ArrayList<String>();
+
+        // initialize list of parse trees
+        parseTrees = new ArrayList<parseTree>();
     }
 
     // public static void main(String[] args) {
@@ -48,12 +53,35 @@ public class parser {
     // }
 
     public boolean parse() {
-        if (eo.conforms(lexer)) {
+        generateParseTrees(lexer);
+        if (eo.conforms(parseTrees)) {
             // interpret the program into java code since the program conforms to the expected order.
             programText = "import java.util.function.Function;\npublic class Test {\n" + "public static void run() {\n" + interpret() + "\n}\n" + "}\n";
             return true;
         } else {
             return false;
+        }
+    }
+
+    private void generateParseTrees(lexer lex) {
+        parseTree curTree = null, tree = curTree;
+        for (lexeme lexeme : lex.lexemes) {
+            if (lexeme.type == lexType.end_of_statement && tree != null) {
+                curTree.addChild(new parseTree(lexeme));
+                parseTrees.add(tree);
+                curTree = null;
+                tree = null;
+            }
+            else if (curTree == null) {
+                curTree = new parseTree(lexeme);
+                if (tree == null) {
+                    tree = curTree;
+                }
+            }
+            else {
+                curTree.addChild(new parseTree(lexeme));
+                curTree = curTree.child;
+            }
         }
     }
 
@@ -66,12 +94,18 @@ public class parser {
         results = "";
 
         lexeme previous = new lexeme(null);
-        for (index = 0; index < lexer.lexemes.size(); index++) {
-            // get current lexeme
-            lexeme lexeme = lexer.lexemes.get(index);
-            results += interpretLexeme(previous, lexeme);
-
-            previous = lexeme;
+        
+        // loop through parse trees 
+        for (parseTree parseTree : parseTrees) {
+            cur = parseTree;
+            while (cur != null) {
+                lexeme lexeme = cur.current;
+                results += interpretLexeme(previous, lexeme);
+    
+                previous = lexeme;
+                                
+                cur = cur.child;
+            }
         }
 
         return results;
@@ -100,16 +134,18 @@ public class parser {
                     result += lexeme.value;
                 } else if (previous.value.equals("while") || previous.value.equals("if") || previous.value.equals("ret")) {
                     result += lexeme.value;
+                } else {
+                    throw new Error("Variable or function name not defined.");
                 }
                 break;
             case assignment:
+                if (!isSameType(previous, cur.child.current)) {
+                    throw new Error("Type mismatch between!");
+                }
                 result += " = ";
                 break;
             case keyword:
                 result += processKeyword(lexeme);
-                if (lexeme.value.contains("print")) {
-                    index++;
-                }
                 break;
             case conditional:
                 if (lexeme.value.equals("=")) {
@@ -134,6 +170,125 @@ public class parser {
                 break;
         }
         return result;
+    }
+
+    private boolean isSameType(lexeme previous, lexeme current) {
+        idInfo info = getIdInfo(previous);
+        if (info.type == "string" && isCorrectLiteral(lexType.string_literal)) {
+            return true;
+        } else if (info.type == "decimal" && isCorrectLiteral(lexType.decimal_literal)) {
+            return true;
+        } else if (info.type == "integer" && isCorrectLiteral(lexType.integer_literal)) {
+            return true;
+        }
+        return false;
+    }
+
+    private boolean isCorrectLiteral(lexType stringLiteral) {
+        parseTree assignmentExpression = cur.child;
+        while (assignmentExpression != null) {
+            switch (stringLiteral) {
+                case string_literal:
+                    switch (assignmentExpression.current.type) {
+                        case id:
+                            idInfo tempInfo = getIdInfo(assignmentExpression.current);
+                            // is a function?
+                            if (tempInfo == null) {
+                                if (!functionExists(assignmentExpression.current))
+                                {
+                                    return false;
+                                }
+                                break;
+                            }
+                            if (!tempInfo.type.equals("string")) {
+                                return false;
+                            }
+                            break;
+                        case end_of_statement:
+                        case string_literal:
+                            break;
+                    
+                        default:
+                            return false;
+                    }
+                    break;
+                case integer_literal:
+                    switch (assignmentExpression.current.type) {
+                        case id:
+                            idInfo tempInfo = getIdInfo(assignmentExpression.current);
+                            // is a function?
+                            if (tempInfo == null) {
+                                if (!functionExists(assignmentExpression.current))
+                                {
+                                    return false;
+                                }
+                                break;
+                            }
+                            if (!tempInfo.type.equals("integer")) {
+                                return false;
+                            }
+                            break;
+                        case operator:
+                        case end_of_statement:
+                        case integer_literal:
+                            break;
+                    
+                        default:
+                            return false;
+                    }
+                    break;
+                case decimal_literal:
+                    switch (assignmentExpression.current.type) {
+                        case id:
+                            idInfo tempInfo = getIdInfo(assignmentExpression.current);
+                            // is a function?
+                            if (tempInfo == null) {
+                                if (!functionExists(assignmentExpression.current))
+                                {
+                                    return false;
+                                }
+                                break;
+                            }
+                            if (!(tempInfo.type.equals("decimal") || tempInfo.type.equals("integer"))) {
+                                return false;
+                            }
+                            break;
+                        case operator:
+                        case end_of_statement:
+                        case decimal_literal:
+                        case integer_literal:
+                            break;
+                    
+                        default:
+                            return false;
+                    }
+                    break;
+            
+                default:
+                    break;
+            }
+
+            assignmentExpression = assignmentExpression.child;
+        }
+        return true;
+    }
+
+    private boolean functionExists(lexeme current) {
+        for (String function : functions) {
+            if (current.value.equals(function)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private idInfo getIdInfo(lexeme previous) {
+        for (idInfo info : ids) {
+            if (info.id.equals(previous.value)) {
+                return info;
+            }
+        }
+        return null;
     }
 
     private boolean isFunction(String value) {
@@ -172,8 +327,8 @@ public class parser {
         lexeme nextLexeme = null;
         switch (lexeme.value) {
             case "print":
-                if (lexer.lexemes.size() > index + 1) {
-                    nextLexeme = lexer.lexemes.get(index + 1);
+                if (cur.child != null) {
+                    nextLexeme = incrementCurrent();
                 }
                 if (nextLexeme != null) {
                     return "System.out.print(" + nextLexeme.value + ");\n";
@@ -181,8 +336,8 @@ public class parser {
                     return "System.out.print();\n";
                 }
             case "printl":
-                if (lexer.lexemes.size() > index + 1) {
-                    nextLexeme = lexer.lexemes.get(index + 1);
+                if (cur.child != null) {
+                    nextLexeme = incrementCurrent();
                 }
                 if (nextLexeme != null && nextLexeme.type != lexType.end_of_statement) {
                     return "System.out.println(" + nextLexeme.value + ");\n";
@@ -205,29 +360,24 @@ public class parser {
                 return "return ";
             case "func":
                 // Function<String, Integer> func = x -> { return x.length(); };
-                index++;
-                lexeme prevLexeme = lexer.lexemes.get(index);
+                lexeme prevLexeme = incrementCurrent();
                 String input = interpretLexeme(lexeme, prevLexeme), output = null;
                 // get function name
-                index++;
-                nextLexeme = lexer.lexemes.get(index);
+                nextLexeme = incrementCurrent();
                 if (nextLexeme.type != lexType.id) {
                     throw new Error("No function name supplied!");
                 }
                 String functionName = nextLexeme.value;
                 // make sure function assignment was used
-                index++;
-                nextLexeme = lexer.lexemes.get(index);
+                nextLexeme = incrementCurrent();
                 if (nextLexeme.type != lexType.function_assignment) {
                     throw new Error("Missing function assignment '->'");
                 }
                 // get output type for function
-                index++;
-                nextLexeme = lexer.lexemes.get(index);
+                nextLexeme = incrementCurrent();
                 output = interpretLexeme(prevLexeme, nextLexeme);
                 // get paramater name
-                index++;
-                nextLexeme = lexer.lexemes.get(index);
+                nextLexeme = incrementCurrent();
                 if (nextLexeme.type != lexType.id) {
                     throw new Error("No function paramater name supplied!");
                 }
@@ -235,12 +385,14 @@ public class parser {
                 // add param to ids
                 ids.add(new idInfo(param, output));
                 // get end of statement
-                index++;
-                nextLexeme = lexer.lexemes.get(index);
+                nextLexeme = incrementCurrent();
                 if (nextLexeme.type != lexType.end_of_statement) {
                     throw new Error("Expected end of statement!");
                 }
                 // add function to list
+                if (isFunction(functionName)) {
+                    throw new Error("Function name already in use!");
+                }
                 functions.add(functionName);
                 return "Function<" + getFunctionType(input) + "," + getFunctionType(output) + "> " + functionName 
                                 + "=" + param + "->";
@@ -249,6 +401,11 @@ public class parser {
                 break;
         }
         return null;
+    }
+
+    private lexeme incrementCurrent() {
+        cur = cur.child;
+        return cur.current;
     }
 
     /**

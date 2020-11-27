@@ -16,8 +16,8 @@ import javax.swing.text.StyleConstants;
 import java.util.List;
 
 import ast.parser;
-import interpreter.interpreter;
 import regex.lexer;
+import transpiler.transpiler;
 
 public class ide {
     private static final int EXIT_ON_CLOSE = 3;
@@ -120,6 +120,7 @@ public class ide {
 
         sysOutStream out = new sysOutStream(ide.outputTextArea);
         System.setOut(new PrintStream(out));
+        System.setErr(new PrintStream(out));
 
         ide.Show();
     }
@@ -149,7 +150,7 @@ public class ide {
         sysOutStream.attributeSet = new SimpleAttributeSet();
         StyleConstants.setForeground(sysOutStream.attributeSet, Color.CYAN);
 
-        interpreter interpreter = new interpreter(par);
+        transpiler interpreter = new transpiler(par);
         interpreter.tryCompile(showInterpretation.isSelected());
     }
 

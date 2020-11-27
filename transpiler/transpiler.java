@@ -1,4 +1,4 @@
-package interpreter;
+package transpiler;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -21,11 +21,11 @@ import javax.tools.JavaCompiler.CompilationTask;
 
 import ast.parser;
 
-public class interpreter {
+public class transpiler {
     public parser parser;
     public String functionText;
 
-    public interpreter(parser par) {
+    public transpiler(parser par) {
         parser = par;
     }
 

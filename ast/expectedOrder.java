@@ -1,11 +1,11 @@
 package ast;
 
+import java.util.ArrayList;
 import java.util.Dictionary;
 import java.util.Hashtable;
 
 import regex.lexType;
 import regex.lexeme;
-import regex.lexer;
 
 public class expectedOrder {
     /**
@@ -107,19 +107,23 @@ public class expectedOrder {
 
     /**
      * Loops through the lexemes in the lexer and checks that they are all in the correct order.
-     * @param lex The lexer to check that the lexemes are in order.
+     * @param parseTrees The lexer to check that the lexemes are in order.
      * @return True if all lexemes are in the correct order False otherwise.
      */
-	public boolean conforms(lexer lex) {
+	public boolean conforms(ArrayList<parseTree> parseTrees) {
         // initialize previous lexeme which should be nothing at the begginning
         lexeme curLexeme = new lexeme(null);
-        // loop through parse trees lexemes
-        for (int i = 0; i < lex.lexemes.size() - 1; i++) {
-            curLexeme = lex.lexemes.get(i);
-
-            // see if the previous, current and next lexemes conform to the expected order as defined in constructor
-            if (!hasCorrectOrder(curLexeme, lex.lexemes.get(i + 1))) {
-                return false;
+        // loop through parse trees 
+        for (parseTree parseTree : parseTrees) {
+            parseTree cur = parseTree;
+            while (cur != null) {
+                curLexeme = cur.current;
+                // see if the current and next lexeme conform to the expected order as defined in constructor
+                if (!hasCorrectOrder(curLexeme, cur.child == null ? null : cur.child.current)) {
+                    return false;
+                }
+                                
+                cur = cur.child;
             }
         }
 		return true;
@@ -132,8 +136,8 @@ public class expectedOrder {
      * @return True if nextLexeme can come after curLexeme.
      */
     private boolean hasCorrectOrder(lexeme curLexeme, lexeme nextLexeme) {
-        // has no next lexeme so anything should be excepted
-        if (nextLexeme.type == null) {
+        // has no next lexeme so anything should be excepted, in other words it's probably reached the end of the parse tree
+        if (nextLexeme == null) {
             return true;
         }
 
