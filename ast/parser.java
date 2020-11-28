@@ -28,7 +28,8 @@ public class parser {
     private String classResults = "";
 
     public ArrayList<idInfo> ids;
-    public ArrayList<String> functions;
+    public ArrayList<functionInfo> functions;
+    public ArrayList<String> classes;
 
     public parser(lexer lex){
         eo = new expectedOrder();
@@ -37,7 +38,9 @@ public class parser {
         // initilize list of arrays
         ids = new ArrayList<idInfo>();
         // initialize list of function names
-        functions = new ArrayList<String>();
+        functions = new ArrayList<functionInfo>();
+        // initialize list of class names
+        classes = new ArrayList<String>();
 
         // initialize list of parse trees
         parseTrees = new ArrayList<parseTree>();
@@ -100,6 +103,11 @@ public class parser {
             if (cur.current.type == lexType.keyword) {
                 if (cur.current.value == "obj") {
                     inClass = true;
+                    
+                    if (cur.child != null && cur.child.current.type == lexType.id) {
+                        classes.add(cur.child.current.value);
+                    }
+
                     firstLineOfClass = true;
                 }
             }
@@ -181,8 +189,13 @@ public class parser {
                 break;
             case id:
                 if (isFunction(lexeme.value)) {
+                    functionInfo info = getFunctionInfo(lexeme.value);
                     inFunctionCall = true;
-                    result += lexeme.value + ".apply(";
+                    if (info.inClass) {
+                        result += lexeme.value + "(";
+                    } else {
+                        result += lexeme.value + ".apply(";
+                    }
                 } else if (!isAlreadyAnId(lexeme.value)) {
                     result += " " + lexeme.value;
                     ids.add(new idInfo(lexeme.value, previous.value));
@@ -191,12 +204,16 @@ public class parser {
                 } else if (previous.value.equals("while") || previous.value.equals("if") || previous.value.equals("ret") || previous.value.equals("obj")) {
                     result += lexeme.value;
                 } else {
-                    throw new Error("Variable or function name not defined.");
+                    if (previous.value.equals("new") && classExists(lexeme.value)) {
+                        result += lexeme.value + "()";
+                    } else {
+                        throw new Error("Variable or function name not defined.");
+                    }
                 }
                 break;
             case assignment:
                 if (!isSameType(previous, cur.child.current)) {
-                    throw new Error("Type mismatch between!");
+                    throw new Error("Type mismatch!");
                 }
                 result += " = ";
                 break;
@@ -217,6 +234,7 @@ public class parser {
             case integer_literal:
             case decimal_literal:
             case operator:
+            case class_accessor:
             case start_of_block:
                 result += lexeme.value;
                 break;
@@ -228,7 +246,30 @@ public class parser {
         return result;
     }
 
+    private boolean classExists(String value) {
+        for (String cl : classes) {
+            if (value.equals(cl)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private functionInfo getFunctionInfo(String value) {
+        for (functionInfo info : functions) {
+            if (info.name.equals(value)) {
+                return info;
+            }
+        }
+        return null;
+    }
+
     private boolean isSameType(lexeme previous, lexeme current) {
+        // edge case for class initialization
+        if (current.value.equals("new")) {
+            return true;
+        }
+        // get id info and make sure the are of the same literal
         idInfo info = getIdInfo(previous);
         if (info.type == "string" && isCorrectLiteral(lexType.string_literal)) {
             return true;
@@ -256,6 +297,9 @@ public class parser {
                                 }
                                 break;
                             }
+                            if (classExists(tempInfo.type)) {
+                                return true;
+                            }
                             if (!tempInfo.type.equals("string")) {
                                 return false;
                             }
@@ -279,6 +323,9 @@ public class parser {
                                     return false;
                                 }
                                 break;
+                            }
+                            if (classExists(tempInfo.type)) {
+                                return true;
                             }
                             if (!tempInfo.type.equals("integer")) {
                                 return false;
@@ -305,6 +352,9 @@ public class parser {
                                 }
                                 break;
                             }
+                            if (classExists(tempInfo.type)) {
+                                return true;
+                            }
                             if (!(tempInfo.type.equals("decimal") || tempInfo.type.equals("integer"))) {
                                 return false;
                             }
@@ -330,8 +380,8 @@ public class parser {
     }
 
     private boolean functionExists(lexeme current) {
-        for (String function : functions) {
-            if (current.value.equals(function)) {
+        for (functionInfo function : functions) {
+            if (current.value.equals(function.name)) {
                 return true;
             }
         }
@@ -348,8 +398,8 @@ public class parser {
     }
 
     private boolean isFunction(String value) {
-        for (String funcName : functions) {
-            if (funcName.equals(value)) {
+        for (functionInfo function : functions) {
+            if (function.name.equals(value)) {
                 return true;
             }
         }
@@ -449,7 +499,7 @@ public class parser {
                 if (isFunction(functionName)) {
                     throw new Error("Function name already in use!");
                 }
-                functions.add(functionName);
+                functions.add(new functionInfo(functionName, inClass));
                 if (inClass) {
                     return "public " + getFunctionType(input) + " " + functionName + "(" + getFunctionType(output) + " " + param + ")";
                 } else {
@@ -466,6 +516,8 @@ public class parser {
                         return "}";
                     }
                     return "";
+                case "new":
+                    return "new ";
 
             default:
                 break;

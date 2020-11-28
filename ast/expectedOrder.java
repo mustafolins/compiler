@@ -16,10 +16,16 @@ public class expectedOrder {
     public expectedOrder(){
         nodes = new Hashtable<lexType, node>();
 
+        // class accessor
+        node classAccessNode = new node(new lexeme(lexType.class_accessor));
+        nodes.put(lexType.class_accessor, classAccessNode);
+
         // id expectations
         node idNode = new node(new lexeme(lexType.id));
+        idNode.addChild(classAccessNode);
         nodes.put(lexType.id, idNode);
         idNode.addChild(idNode);
+        classAccessNode.addChild(idNode);
 
         // end of statement expextations
         node endOfStatementNode = new node(new lexeme(lexType.end_of_statement));
@@ -40,6 +46,7 @@ public class expectedOrder {
         stringNode.addChild(operatorNode);
         nodes.put(lexType.string_literal, stringNode);
         operatorNode.addChild(stringNode);
+        idNode.addChild(stringNode);
 
         // integer literal expectations
         node intNode = new node(new lexeme(lexType.integer_literal));
@@ -56,6 +63,7 @@ public class expectedOrder {
         decNode.addChild(operatorNode);
         nodes.put(lexType.decimal_literal, decNode);
         operatorNode.addChild(decNode);
+        idNode.addChild(decNode);
 
         // assignment
         node assignmentNode = new node(new lexeme(lexType.assignment));
@@ -138,6 +146,11 @@ public class expectedOrder {
      * @return True if nextLexeme can come after curLexeme.
      */
     private boolean hasCorrectOrder(lexeme curLexeme, lexeme nextLexeme) {
+        // edge case for class initialization
+        if (curLexeme.type == lexType.assignment && nextLexeme.value.equals("new")) {
+            return true;
+        }
+
         // has no next lexeme so anything should be excepted, in other words it's probably reached the end of the parse tree
         if (nextLexeme == null) {
             return true;

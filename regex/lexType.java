@@ -12,5 +12,6 @@ public enum lexType{
     operator,
     start_of_block,
     end_of_block,
-    function_assignment
+    function_assignment, 
+    class_accessor
 }

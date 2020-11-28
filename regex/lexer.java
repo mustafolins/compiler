@@ -21,6 +21,7 @@ public class lexer {
     private regex conditionalReg = new regex("^[<>=][=]*");
     private regex assignmentReg = new regex("^[:]");
     private regex functionAssignmentReg = new regex("^\\->");
+    private regex classAccessorReg = new regex("^\\.");
 
     private ArrayList<String> keywords;
     private ArrayList<String> keywordsDescription;
@@ -49,6 +50,8 @@ public class lexer {
     // }
 
     private void initializeKeywords() {
+        keywords.add("new");
+        keywordsDescription.add("Initializes a new class/object");
         keywords.add("obj");
         keywordsDescription.add("The start of class/object");
         keywords.add("endobj");
@@ -119,6 +122,12 @@ public class lexer {
                 str = str.replaceFirst(Pattern.quote(endOfBlockReg.lastMatch), "");
                 lexemes.add(new lexeme(lexType.end_of_block, endOfBlockReg.lastMatch));
                 lastMatch = endOfBlockReg.lastMatch;
+            }
+            // class accessor
+            else if (classAccessorReg.isMatch(str)) {
+                str = str.replaceFirst(Pattern.quote(classAccessorReg.lastMatch), "");
+                lexemes.add(new lexeme(lexType.class_accessor, classAccessorReg.lastMatch));
+                lastMatch = classAccessorReg.lastMatch;
             }
             // fucntion assignment
             else if (functionAssignmentReg.isMatch(str)) {

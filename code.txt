@@ -45,8 +45,11 @@ printl factOf5
 obj person
     string first : "Jon"
     string last : "Van Dam"
-    func string getName -> integer temp
+    func string getName -> string temp
     {
         ret first + " " + last
     }
 endobj
+person me : new person
+string tempName : me.getName ""
+printl tempName
