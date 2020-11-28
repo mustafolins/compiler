@@ -49,6 +49,10 @@ public class lexer {
     // }
 
     private void initializeKeywords() {
+        keywords.add("obj");
+        keywordsDescription.add("The start of class/object");
+        keywords.add("endobj");
+        keywordsDescription.add("The end of class/object");
         keywords.add("ret");
         keywordsDescription.add("Signals that the preceding statement should be returned.");
         keywords.add("func");

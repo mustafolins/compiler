@@ -41,3 +41,12 @@ func integer factorial -> integer number
 print "Factorial of 5: "
 integer factOf5 : factorial 5
 printl factOf5
+~ Declare an object of type person
+obj person
+    string first : "Jon"
+    string last : "Van Dam"
+    func string getName -> integer temp
+    {
+        ret first + " " + last
+    }
+endobj

@@ -18,11 +18,14 @@ public class parser {
     private boolean inConditional = false;
     /** Indicates inside of a function. */
     private boolean inFunctionCall = false;
+    private boolean inClass = false;
+    boolean firstLineOfClass = false;
 
     /** The current lexeme to process */
     // private int index = 0;
     parseTree cur = null;
     private String results = "";
+    private String classResults = "";
 
     public ArrayList<idInfo> ids;
     public ArrayList<String> functions;
@@ -56,7 +59,8 @@ public class parser {
         generateParseTrees(lexer);
         if (eo.conforms(parseTrees)) {
             // interpret the program into java code since the program conforms to the expected order.
-            programText = "import java.util.function.Function;\npublic class Test {\n" + "public static void run() {\n" + interpret() + "\n}\n" + "}\n";
+            programText = "import java.util.function.Function;\n" 
+                + interpretClasses() + "\npublic class Test {\n" + "public static void run() {\n" + interpret() + "\n}\n" + "}\n";
             return true;
         } else {
             return false;
@@ -85,6 +89,42 @@ public class parser {
         }
     }
 
+    private String interpretClasses() {
+        classResults = "";
+
+        lexeme previous = new lexeme(null);
+        
+        // loop through parse trees 
+        for (parseTree parseTree : parseTrees) {
+            cur = parseTree;
+            if (cur.current.type == lexType.keyword) {
+                if (cur.current.value == "obj") {
+                    inClass = true;
+                    firstLineOfClass = true;
+                }
+            }
+            // only process classes
+            if (inClass) {
+                while (cur != null) {
+                    lexeme lexeme = cur.current;
+                    classResults += interpretLexeme(previous, lexeme);
+        
+                    previous = lexeme;
+                                    
+                    cur = cur.child;
+                }
+                firstLineOfClass = false;
+            }
+            if (parseTree.current.type == lexType.keyword) {
+                if (parseTree.current.value == "endobj") {
+                    inClass = false;
+                }
+            }
+        }
+
+        return classResults;
+    }
+
     /**
      * Interprets the parser's parse tree into java equivalent code.
      * 
@@ -98,13 +138,25 @@ public class parser {
         // loop through parse trees 
         for (parseTree parseTree : parseTrees) {
             cur = parseTree;
-            while (cur != null) {
-                lexeme lexeme = cur.current;
-                results += interpretLexeme(previous, lexeme);
-    
-                previous = lexeme;
-                                
-                cur = cur.child;
+            if (cur.current.type == lexType.keyword) {
+                if (cur.current.value == "obj") {
+                    inClass = true;
+                }
+            }
+            if (!inClass) {
+                while (cur != null) {
+                    lexeme lexeme = cur.current;
+                    results += interpretLexeme(previous, lexeme);
+        
+                    previous = lexeme;
+                                    
+                    cur = cur.child;
+                }
+            }
+            if (parseTree.current.type == lexType.keyword) {
+                if (parseTree.current.value == "endobj") {
+                    inClass = false;
+                }
             }
         }
 
@@ -115,7 +167,11 @@ public class parser {
         String result = "";
         switch (lexeme.type) {
             case end_of_statement:
-                result += (inConditional || inFunctionCall) ? ((inFunctionCall) ? ");\n" : ")\n") : ";\n";
+                if (firstLineOfClass) {
+                    result += "{\n";
+                } else {
+                    result += (inConditional || inFunctionCall) ? ((inFunctionCall) ? ");\n" : ")\n") : ";\n";
+                }
                 if (inConditional) {
                     inConditional = false;
                 }
@@ -132,7 +188,7 @@ public class parser {
                     ids.add(new idInfo(lexeme.value, previous.value));
                 } else if (previous.type != lexType.keyword) {
                     result += lexeme.value;
-                } else if (previous.value.equals("while") || previous.value.equals("if") || previous.value.equals("ret")) {
+                } else if (previous.value.equals("while") || previous.value.equals("if") || previous.value.equals("ret") || previous.value.equals("obj")) {
                     result += lexeme.value;
                 } else {
                     throw new Error("Variable or function name not defined.");
@@ -394,8 +450,22 @@ public class parser {
                     throw new Error("Function name already in use!");
                 }
                 functions.add(functionName);
-                return "Function<" + getFunctionType(input) + "," + getFunctionType(output) + "> " + functionName 
-                                + "=" + param + "->";
+                if (inClass) {
+                    return "public " + getFunctionType(input) + " " + functionName + "(" + getFunctionType(output) + " " + param + ")";
+                } else {
+                    return "Function<" + getFunctionType(input) + "," + getFunctionType(output) + "> " + functionName 
+                                    + "=" + param + "->";
+                }
+                case "obj":
+                    if (inClass) {
+                        return "class ";
+                    }
+                    return "";
+                case "endobj":
+                    if (inClass) {
+                        return "}";
+                    }
+                    return "";
 
             default:
                 break;

@@ -37,7 +37,9 @@ public class expectedOrder {
         // string literal expectations
         node stringNode = new node(new lexeme(lexType.string_literal));
         stringNode.addChild(endOfStatementNode);
+        stringNode.addChild(operatorNode);
         nodes.put(lexType.string_literal, stringNode);
+        operatorNode.addChild(stringNode);
 
         // integer literal expectations
         node intNode = new node(new lexeme(lexType.integer_literal));
