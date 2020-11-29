@@ -13,21 +13,6 @@ integer num : 12 + 3
 printl num
 integer v21a : 123678
 printl v21a
-~ loop while num is greater than 10
-while num >= 10
-{
-    ~ print num
-    printl num
-    ~ decrement num
-    num : num - 1
-}
-func integer addOne -> integer x
-{
-    ret x + 1
-}
-printl num
-num : addOne num
-printl num
 func integer factorial -> integer number
 {
     integer result : 1
@@ -53,3 +38,22 @@ endobj
 person me : new person
 string tempName : me.getName ""
 printl tempName
+~ control flow
+integer x : 3
+if x < 4
+{
+    printl "Less than four!"
+}
+if x = 3
+{
+    x : 5
+    print "x is greater "
+    printl x
+}
+while x >= 1
+{
+    x : x - 1
+    printl x
+}
+string tempStr : "1" + 2 + x
+printl tempStr

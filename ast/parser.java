@@ -281,10 +281,11 @@ public class parser {
         return false;
     }
 
-    private boolean isCorrectLiteral(lexType stringLiteral) {
+    private boolean isCorrectLiteral(lexType literal) {
         parseTree assignmentExpression = cur.child;
+        boolean isCorrect = true;
         while (assignmentExpression != null) {
-            switch (stringLiteral) {
+            switch (literal) {
                 case string_literal:
                     switch (assignmentExpression.current.type) {
                         case id:
@@ -293,23 +294,35 @@ public class parser {
                             if (tempInfo == null) {
                                 if (!functionExists(assignmentExpression.current))
                                 {
-                                    return false;
+                                    isCorrect &= false;
                                 }
                                 break;
                             }
                             if (classExists(tempInfo.type)) {
-                                return true;
+                                isCorrect &= true;
                             }
                             if (!tempInfo.type.equals("string")) {
-                                return false;
+                                isCorrect &= false;
+                            } else {
+                                // only need one variable of type string because of string concatenation
+                                return true;
+                            }
+                            break;
+                        case operator:
+                            if (!assignmentExpression.current.value.equals("+")) {
+                                isCorrect &= false;
                             }
                             break;
                         case end_of_statement:
                         case string_literal:
+                            // only need one variable of type string because of string concatenation
+                            return true;
+                        case integer_literal:
+                        case decimal_literal:
                             break;
                     
                         default:
-                            return false;
+                            isCorrect &= false;
                     }
                     break;
                 case integer_literal:
@@ -320,15 +333,15 @@ public class parser {
                             if (tempInfo == null) {
                                 if (!functionExists(assignmentExpression.current))
                                 {
-                                    return false;
+                                    isCorrect &= false;
                                 }
                                 break;
                             }
                             if (classExists(tempInfo.type)) {
-                                return true;
+                                isCorrect &= true;
                             }
                             if (!tempInfo.type.equals("integer")) {
-                                return false;
+                                isCorrect &= false;
                             }
                             break;
                         case operator:
@@ -337,7 +350,7 @@ public class parser {
                             break;
                     
                         default:
-                            return false;
+                            isCorrect &= false;
                     }
                     break;
                 case decimal_literal:
@@ -348,15 +361,15 @@ public class parser {
                             if (tempInfo == null) {
                                 if (!functionExists(assignmentExpression.current))
                                 {
-                                    return false;
+                                    isCorrect &= false;
                                 }
                                 break;
                             }
                             if (classExists(tempInfo.type)) {
-                                return true;
+                                isCorrect &= true;
                             }
                             if (!(tempInfo.type.equals("decimal") || tempInfo.type.equals("integer"))) {
-                                return false;
+                                isCorrect &= false;
                             }
                             break;
                         case operator:
@@ -366,7 +379,7 @@ public class parser {
                             break;
                     
                         default:
-                            return false;
+                            isCorrect &= false;
                     }
                     break;
             
@@ -376,7 +389,7 @@ public class parser {
 
             assignmentExpression = assignmentExpression.child;
         }
-        return true;
+        return isCorrect;
     }
 
     private boolean functionExists(lexeme current) {
