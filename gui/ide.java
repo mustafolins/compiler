@@ -54,8 +54,10 @@ public class ide {
         codeTextArea = new JTextPane();
         codeTextArea.setBounds(10, 50, 580, 700);
         codeTextArea.setBackground(Color.darkGray);
-        codeTextArea.setForeground(Color.white);
+        codeTextArea.setForeground(Color.cyan);
         codeTextArea.setFont(new Font("Consolas", Font.PLAIN, 14));
+        codeTextArea.setCaretColor(Color.white);
+        codeTextArea.setSelectionColor(Color.blue);
         codeScrollPane = new JScrollPane(codeTextArea, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
                 JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         codeScrollPane.setBounds(10, 50, 580, 700);
@@ -148,10 +150,15 @@ public class ide {
 
         // set interpreter style
         sysOutStream.attributeSet = new SimpleAttributeSet();
-        StyleConstants.setForeground(sysOutStream.attributeSet, Color.CYAN);
+        StyleConstants.setForeground(sysOutStream.attributeSet, Color.pink);
 
-        transpiler interpreter = new transpiler(par);
-        interpreter.tryCompile(showInterpretation.isSelected());
+        try {
+            transpiler interpreter = new transpiler(par);
+            interpreter.tryCompile(showInterpretation.isSelected());
+        } catch (Error error) {
+            String temp = error.getMessage();
+            System.err.println(temp);
+        }
     }
 
     private static String ReadFile(String file) {

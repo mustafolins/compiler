@@ -210,7 +210,7 @@ public class parser {
                         if (inFunctionCall) {
                             result += lexeme.value;
                         } else {
-                            throw new Error("Variable or function name not defined.");
+                            throw new Error("Variable or function name not defined or already in use and can't be redefined.");
                         }
                     }
                 }
