@@ -207,7 +207,11 @@ public class parser {
                     if (previous.value.equals("new") && classExists(lexeme.value)) {
                         result += lexeme.value + "()";
                     } else {
-                        throw new Error("Variable or function name not defined.");
+                        if (inFunctionCall) {
+                            result += lexeme.value;
+                        } else {
+                            throw new Error("Variable or function name not defined.");
+                        }
                     }
                 }
                 break;
@@ -447,19 +451,21 @@ public class parser {
         switch (lexeme.value) {
             case "print":
                 if (cur.child != null) {
-                    nextLexeme = incrementCurrent();
+                    nextLexeme = cur.child.current;
                 }
                 if (nextLexeme != null) {
-                    return "System.out.print(" + nextLexeme.value + ");\n";
+                    inFunctionCall = true;
+                    return "System.out.print(";
                 } else {
                     return "System.out.print();\n";
                 }
             case "printl":
                 if (cur.child != null) {
-                    nextLexeme = incrementCurrent();
+                    nextLexeme = cur.child.current;
                 }
                 if (nextLexeme != null && nextLexeme.type != lexType.end_of_statement) {
-                    return "System.out.println(" + nextLexeme.value + ");\n";
+                    inFunctionCall = true;
+                    return "System.out.println(";
                 } else {
                     return "System.out.println();\n";
                 }

@@ -13,6 +13,7 @@ integer num : 12 + 3
 printl num
 integer v21a : 123678
 printl v21a
+~ declare a function
 func integer factorial -> integer number
 {
     integer result : 1
