@@ -70,20 +70,28 @@ printl tempName
 <function> ::= func <keyword> <id> -> <keyword> <id> <end_of_statement>
                 \{ <end_of_statement>
                 { <statement> }
-                ret <expresion>
+                ret <expresion> <end_of_statement>
                 \} <end_of_statement>
 
-<statement> ::= (<assignment> | <class_accessor> | <function_call>) <end_of_statment>
+<statement> ::= ((<assignment> | <class_accessor> | <function_call>) <end_of_statment>)
+                | (<control_flow>)
 
 <assignment> ::= [ <keyword> ] <id> : (<expresion> | <class_initialization>)
 
-<expression> ::= ({ (<id> | <literal> ) }+ [(+ | - | * | /) <expression>]) 
-                | <class_accessor>
+<expression> ::= ( { (<id> | <literal> ) }+ [(+ | - | * | /) <expression>] ) | <class_accessor>
+
+<control_flow> ::= (if | while) <condition> <end_of_statement> 
+                    \{ <end_of_statement> 
+                    { <statement> } <end_of_statement>
+                    \} <end_of_statement>
+
+<condition> ::= <expression> <conditional> <expression>
+<conditional> ::= (< | > | <= | >= | =)
 
 <class_initialization> ::= new <id>
-<class_accessor> ::= <id>\.<id> <literal>
+<class_accessor> ::= <id>\.<id>
 
-<function_call> ::= <id> (<id> | <literal>)
+<function_call> ::= ( <id> | <class_accessor> ) (<id> | <literal>)
 
 <literal> ::= ( <string_literal> | <decimal_literal> | <integer_literal> )
 ```
