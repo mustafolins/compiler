@@ -217,7 +217,7 @@ public class parser {
                 break;
             case assignment:
                 if (!isSameType(previous, cur.child.current)) {
-                    throw new Error("Type mismatch!");
+                    throw new Error("Type mismatch or variable undefined!");
                 }
                 result += " = ";
                 break;
@@ -287,7 +287,7 @@ public class parser {
 
     private boolean isCorrectLiteral(lexType literal) {
         parseTree assignmentExpression = cur.child;
-        boolean isCorrect = true;
+        boolean isCorrect = true, hasOneString = false;
         while (assignmentExpression != null) {
             switch (literal) {
                 case string_literal:
@@ -309,18 +309,19 @@ public class parser {
                                 isCorrect &= false;
                             } else {
                                 // only need one variable of type string because of string concatenation
-                                return true;
+                                hasOneString = true;
                             }
                             break;
                         case operator:
+                            // if the operator is every not a + then it should be uninterpretable since only string concatenation is allowed
                             if (!assignmentExpression.current.value.equals("+")) {
-                                isCorrect &= false;
+                                return false;
                             }
                             break;
                         case end_of_statement:
                         case string_literal:
                             // only need one variable of type string because of string concatenation
-                            return true;
+                            hasOneString = true;
                         case integer_literal:
                         case decimal_literal:
                             break;
@@ -393,7 +394,7 @@ public class parser {
 
             assignmentExpression = assignmentExpression.child;
         }
-        return isCorrect;
+        return isCorrect | hasOneString;
     }
 
     private boolean functionExists(lexeme current) {
